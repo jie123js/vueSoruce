@@ -1,8 +1,15 @@
-import { isObject } from "../utils";
+import { isArray, isObject } from "../utils";
+import { arrayMethods } from "./array";
 
 class Observe {
   constructor(value) {
-    this.walk(value);
+    if (isArray(value)) {
+      console.log(value);
+
+      value.__proto__ = arrayMethods;
+    } else {
+      this.walk(value);
+    }
   }
   walk(data) {
     //todo 循环对象的key且不要原型上面的key
