@@ -5,12 +5,12 @@ export function renderMixin(Vue) {
   Vue.prototype._c = function () {
     //创建元素节点
     const vm = this;
-    console.log(arguments);
+    // console.log(arguments);
     return createElement(vm, ...arguments);
   };
   Vue.prototype._v = function (text) {
     //创建文本节点
-    console.log(arguments);
+    //console.log(arguments);
     const vm = this;
 
     return createText(vm, text); //描述虚拟节点属于哪个实例
@@ -30,7 +30,7 @@ export function renderMixin(Vue) {
     let vnode = render.call(vm);
     //然后这里面执行的时候里面的函数都是在类里面的函数c,v,s都会从原型上找到执行
     //这里为什么可以用vm但是vm里面的取值明明还有一层才可以取到(和test.js相比较)因为我们之前做了代理我们访问vm.name其实是代理到了vm._data.name
-    console.log(vnode);
+    //  console.log(vnode);
     return vnode;
   };
 }

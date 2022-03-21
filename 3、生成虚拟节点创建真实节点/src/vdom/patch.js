@@ -8,6 +8,7 @@ export function patch(el, vnode) {
   const parentNode = el.parentNode;
   parentNode.insertBefore(elm, el.nextSibling); //el.nextSibling如果不存在就是null,那就相当于appendChild所以需要用 el.parentNode的父亲节点
   parentNode.removeChild(el);
+  return elm;
 }
 //面试有问 虚拟节点的实现 和虚拟节点渲染成真实节点
 function createEle(vnode) {

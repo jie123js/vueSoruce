@@ -24,7 +24,38 @@
 剩余参数是指函数定义时以...为前缀的参数，这个参数是一个没有对应形参的实参组成的一个数组，所以它与arguments有一定的区别，剩余参数中可以使用push、map等数组方法
 
 ### 3、闭包里面的return
-函数如果执行return 后面代码是不会执行的 不管是函数里面套函数  如上面a函数 console.log(321);永远不会执行
+函数如果执行return 后面代码是不会执行的 不管是函数里面套函数(错的只有if语句才会)  如上面a函数 console.log(321);永远不会执行
+上面说的不对  上面是因为if语句
+假如变成
+```JavaScript
+	 function a(){
+			b()
+			console.log(111);
+		}
+
+		function b(){
+			if(3>2){
+				return
+			}
+		}
+		a()
+		函数里面套函数会执行 控制台会打印111
+		
+		function a(){
+			if(3>1){
+				return console.log(222)
+			}
+			console.log(111);
+		}
+		
+		function b(){
+			if(3>2){
+				return
+			}
+		}
+		a() 这里就只会打印222了
+		
+		```
 
 ### 4、关于call的一些问题
 ![](img/微信截图_20220316095820.png)

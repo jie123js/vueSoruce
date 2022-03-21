@@ -43,6 +43,24 @@
     };
   });
 
+  let id = 0;
+
+  class Dep {
+    //dep记住watcher  watcher记住dep
+    constructor() {
+      this.subs = [];
+      this.id = id++;
+    }
+
+    depend() {
+      this.subs.push(Dep.target);
+      console.log(this.subs);
+    }
+
+  }
+
+  Dep.target = null; //做一个标识  静态属性 其实就是static target 一样
+
   class Observe {
     constructor(value) {
       Object.defineProperty(value, "_ob_", {
@@ -79,10 +97,20 @@
 
   function defineReactive(obj, key, value) {
     //todo data里面嵌套对象的话递归调用(这个是vue2性能差的一个原因)
-    observe(value); //todo 这是一个闭包这个value不能被销毁
+    observe(value); //要给每个属性都要加一个dep
+
+    let dep = new Dep();
+    console.log(dep); //todo 这是一个闭包这个value不能被销毁
 
     Object.defineProperty(obj, key, {
       get() {
+        console.log(Dep.target);
+
+        if (Dep.target) {
+          console.log(11);
+          dep.depend();
+        }
+
         return value;
       },
 
@@ -381,28 +409,51 @@
     // 2.代码生成
 
     let code = generate(ast); //模板引擎的实现原理基本都是new Function + with
+    //console.log(code);
 
-    console.log(code);
-    let render = new Function(`with(this){return ${code}}`);
-    console.log(render.toString());
-    console.log(render);
+    let render = new Function(`with(this){return ${code}}`); // console.log(render.toString());
+    // console.log(render);
+
     return render; // 1.编译原理
     // 2.响应式原理 依赖收集
     // 3.组件化开发 （贯穿了vue的流程）
     // 4.diff算法
   }
 
+  class Watcher {
+    constructor(vm, fn, cb, options) {
+      //为了让页面后续使用先把接受的值保存在this里面
+      this.vm = vm;
+      this.fn = fn;
+      this.cb = cb;
+      this.options = options;
+      this.getter = fn; //fn就是页面渲染逻辑
+
+      this.get();
+    }
+
+    get() {
+      Dep.target = this; //在数据get前先赋值
+
+      debugger;
+      this.getter(); //页面渲染逻辑   为什么不能放在set里面 因为有可能set里面的数据没在试图中使用,是没必要重新渲染页面的
+      //调getter 里面的render函数 _s _v _c 会去获取数据vm.name vm.age就会走对象的get
+      // Dep.target = null; //防止重复收集  渲染完毕就清空标识  只有在渲染的时候或者更新的时候才依赖收集
+    }
+
+  }
+
   function patch(el, vnode) {
     //删除老节点 根据vnode创建新节点,替换掉老节点
     //我们需要先把新节点创建到老节点后面,然后再删除掉老节点
-    const elm = createEle(vnode);
-    console.log(elm); //   把虚拟节点插入当前页面元素的下一个元素前面
+    const elm = createEle(vnode); //   把虚拟节点插入当前页面元素的下一个元素前面
     //el.nextSibling//当前元素的下一个元素
 
     const parentNode = el.parentNode;
     parentNode.insertBefore(elm, el.nextSibling); //el.nextSibling如果不存在就是null,那就相当于appendChild所以需要用 el.parentNode的父亲节点
 
     parentNode.removeChild(el);
+    return elm;
   } //面试有问 虚拟节点的实现 和虚拟节点渲染成真实节点
 
   function createEle(vnode) {
@@ -426,27 +477,31 @@
       vnode.el = document.createTextNode(text);
     }
 
-    console.log(vnode);
     return vnode.el;
   }
 
   function updateProperties(el, props = {}) {
     //后续diff算法的时候再完善,先不考虑class等
-    console.log(props);
-
     for (let key in props) {
       el.setAttribute(key, props[key]);
     }
-
-    console.log(el);
   }
 
   function mountComponent(vm) {
     //调用render()  但是这个方法可能每个人都要用,可以封装一下
-    let vnode = vm._render(); //拿到虚拟节点,然后去变成真实节点
+    vm._render(); //拿到虚拟节点,然后去变成真实节点
 
 
-    vm._updata(vnode);
+    let updataComponents = () => {
+      vm._updata(vm._render());
+    }; //updataComponents(); //执行这个函数页面才会渲染更新
+    //把这个逻辑渲染放到watcher
+    //每个组件都有一个watcher
+
+
+    new Watcher(vm, updataComponents, () => {
+      console.log("后续逻辑");
+    }, true);
   }
   function lifeCycleMixin(Vue) {
     Vue.prototype._updata = function (vnode) {
@@ -528,14 +583,14 @@
   function renderMixin(Vue) {
     Vue.prototype._c = function () {
       //创建元素节点
-      const vm = this;
-      console.log(arguments);
+      const vm = this; // console.log(arguments);
+
       return createElement(vm, ...arguments);
     };
 
     Vue.prototype._v = function (text) {
       //创建文本节点
-      console.log(arguments);
+      //console.log(arguments);
       const vm = this;
       return createText(vm, text); //描述虚拟节点属于哪个实例
     };
@@ -557,8 +612,8 @@
       } = vm.$options;
       let vnode = render.call(vm); //然后这里面执行的时候里面的函数都是在类里面的函数c,v,s都会从原型上找到执行
       //这里为什么可以用vm但是vm里面的取值明明还有一层才可以取到(和test.js相比较)因为我们之前做了代理我们访问vm.name其实是代理到了vm._data.name
+      //  console.log(vnode);
 
-      console.log(vnode);
       return vnode;
     };
   }

@@ -9,10 +9,10 @@ export function compileToFunction(template) {
 
   // 2.代码生成
   let code = generate(ast); //模板引擎的实现原理基本都是new Function + with
-  console.log(code);
+  //console.log(code);
   let render = new Function(`with(this){return ${code}}`);
-  console.log(render.toString());
-  console.log(render);
+  // console.log(render.toString());
+  // console.log(render);
   return render;
   // 1.编译原理
   // 2.响应式原理 依赖收集

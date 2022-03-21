@@ -1,5 +1,6 @@
 import { isArray, isObject } from "../utils";
 import { arrayMethods } from "./array";
+import Dep from "./dep";
 
 class Observe {
   constructor(value) {
@@ -34,9 +35,17 @@ class Observe {
 function defineReactive(obj, key, value) {
   //todo data里面嵌套对象的话递归调用(这个是vue2性能差的一个原因)
   observe(value);
+  //要给每个属性都要加一个dep
+  let dep = new Dep();
+  console.log(dep);
   //todo 这是一个闭包这个value不能被销毁
   Object.defineProperty(obj, key, {
     get() {
+      console.log(Dep.target);
+      if (Dep.target) {
+        console.log(11);
+        dep.depend();
+      }
       return value;
     },
     set(newValue) {
