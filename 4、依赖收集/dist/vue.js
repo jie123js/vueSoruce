@@ -43,18 +43,30 @@
     };
   });
 
-  let id = 0;
+  let id$1 = 0;
 
   class Dep {
     //dep记住watcher  watcher记住dep
     constructor() {
       this.subs = [];
-      this.id = id++;
+      this.id = id$1++;
     }
 
     depend() {
-      this.subs.push(Dep.target);
-      console.log(this.subs);
+      // this.subs.push(Dep.target); //这样写会重复收集(如果一个页面用多次相同属性如name) 需要加唯一标识给watcher
+      //我们这需要让dep记住watcher,watcher记住dep,这是一个双向奔赴的过程
+      Dep.target.addDep(this); //再在watcher中调用dep的addSub方法
+    }
+
+    addSub(watcher) {
+      //这样写的好处是只要记住一次  不用dep和watcher分别记住 增加判断了
+      this.subs.push(watcher); //让dep记住watcher
+    }
+
+    notify() {
+      this.subs.forEach(watcher => {
+        watcher.update();
+      });
     }
 
   }
@@ -99,15 +111,11 @@
     //todo data里面嵌套对象的话递归调用(这个是vue2性能差的一个原因)
     observe(value); //要给每个属性都要加一个dep
 
-    let dep = new Dep();
-    console.log(dep); //todo 这是一个闭包这个value不能被销毁
+    let dep = new Dep(); //todo 这是一个闭包这个value不能被销毁
 
     Object.defineProperty(obj, key, {
       get() {
-        console.log(Dep.target);
-
         if (Dep.target) {
-          console.log(11);
           dep.depend();
         }
 
@@ -115,14 +123,14 @@
       },
 
       set(newValue) {
-        console.log("我被处罚");
         observe(newValue); //如果新的值是一个新对象也需要劫持
 
-        if (newValue = value) {
+        if (newValue === value) {
           return;
         }
 
         value = newValue;
+        dep.notify();
       }
 
     });
@@ -420,6 +428,8 @@
     // 4.diff算法
   }
 
+  let id = 0;
+
   class Watcher {
     constructor(vm, fn, cb, options) {
       //为了让页面后续使用先把接受的值保存在this里面
@@ -427,18 +437,40 @@
       this.fn = fn;
       this.cb = cb;
       this.options = options;
+      this.id = ++id;
+      this.depsId = new Set(); //set里面不能放重复的数据
+
+      this.deps = [];
       this.getter = fn; //fn就是页面渲染逻辑
 
+      this.get();
+    }
+
+    addDep(dep) {
+      let did = dep.id;
+
+      if (!this.depsId.has(did)) {
+        this.depsId.add(did);
+        this.deps.push(dep); //做了一个保存id的功能 并且让watcher记住dep
+
+        dep.addSub(this);
+      }
+    }
+
+    update() {
+      //为什么更新不直接调用get() 因为有可能一直重复修改
+      //在这里可以做异步更新
+      console.log("update");
       this.get();
     }
 
     get() {
       Dep.target = this; //在数据get前先赋值
 
-      debugger;
       this.getter(); //页面渲染逻辑   为什么不能放在set里面 因为有可能set里面的数据没在试图中使用,是没必要重新渲染页面的
       //调getter 里面的render函数 _s _v _c 会去获取数据vm.name vm.age就会走对象的get
-      // Dep.target = null; //防止重复收集  渲染完毕就清空标识  只有在渲染的时候或者更新的时候才依赖收集
+
+      Dep.target = null; //防止重复收集  渲染完毕就清空标识  只有在渲染的时候或者更新的时候才依赖收集
     }
 
   }
@@ -490,6 +522,7 @@
   function mountComponent(vm) {
     //调用render()  但是这个方法可能每个人都要用,可以封装一下
     vm._render(); //拿到虚拟节点,然后去变成真实节点
+    //! 这里不能把vnode放外面  需要把vm._render一起放进去 不然执行watcher的时候劫持get提前发生了 后面的逻辑会失效
 
 
     let updataComponents = () => {

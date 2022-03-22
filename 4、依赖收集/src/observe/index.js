@@ -37,24 +37,22 @@ function defineReactive(obj, key, value) {
   observe(value);
   //要给每个属性都要加一个dep
   let dep = new Dep();
-  console.log(dep);
+
   //todo 这是一个闭包这个value不能被销毁
   Object.defineProperty(obj, key, {
     get() {
-      console.log(Dep.target);
       if (Dep.target) {
-        console.log(11);
         dep.depend();
       }
       return value;
     },
     set(newValue) {
-      console.log("我被处罚");
       observe(newValue); //如果新的值是一个新对象也需要劫持
-      if ((newValue = value)) {
+      if (newValue === value) {
         return;
       }
       value = newValue;
+      dep.notify();
     },
   });
 }

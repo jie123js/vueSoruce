@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">{{arr}}aaa{{name}}{{name}}{{name}}bbb{{age}}ccc<div>321{{like}}</div>
+    </div>
+    <script src="./vue.js"></script>
+    <script>
+        let vm = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    like: 'basketball',
+                    name: 'kobe',
+                    age: 11,
+                    arr: [1, 2, [1, 1]]
+
+                }
+            }
+
+        })
+        vm.name = 'kobe2'
+        vm.name = '123'
+        vm.name = 'gigi'
+        vm.$nextTick(() => {
+            //console.log(vm.$el.innerHTML);
+        })
+        // console.log(vm.$el.innerHTML);
+        console.log(vm);
+        //vm.arr = 1
+        vm.arr.push(100)
+    </script>
+
+</body>
+
+</html>
