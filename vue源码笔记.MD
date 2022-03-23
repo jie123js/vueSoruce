@@ -64,3 +64,9 @@ call是可以接受好多参数的这里用...展开运算符把数组展开了
   //如果data写的是函数this指向是window所以我们需要用call重置(对call的一个理解call里面如果写个this当第一个参数,意思就是谁调用他就谁当this,不改变原来执行的this)
   //例子 arr.push.call(this) 那这个就是正常执行push方法原来的this其实arr 这样写的好处是可以加多个参数因为call第二个参数可以是数组 arr.push.call(this,...args)
   data = vm._data = isFunction(data) ? data.call(vm) : data;
+  
+  
+## 二、3.23学习总结
+
+一天起码是要看好一天的内容的,如果遇到周末的课最少是看半天的 现在是16  一共是63  还有47  之前是15号到23号看了16节 理论上还需要23天
+加油吧  啊杰  最近刻苦程度不够啊 学的都变慢了 感觉
