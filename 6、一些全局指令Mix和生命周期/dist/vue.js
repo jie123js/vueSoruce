@@ -849,6 +849,8 @@
       } */
 
   function Vue(options) {
+    debugger;
+
     this._init(options);
   }
 
