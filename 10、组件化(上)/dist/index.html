@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">
+        <div>1111</div>
+        <my-button></my-button>
+    </div>
+    <script src="./vue.js"></script>
+    <script>
+        // Vue.component('my-button', { //全局组件
+        //     template: '<button>你好,全局组件</button>',
+        //     data() {
+        //         return {
+        //             name: 'Vue'
+        //         }
+        //     }
+        // })
+        let vm = new Vue({
+            el: '#app',
+            components: {
+                'my-button': {
+                    template: '<button>你好啊,我是局部组件</button>',
+                    data() {
+                        return {
+                            name: 'kobe',
+                            age: 19,
+                            like: 'ball'
+                        }
+                    }
+                }
+            },
+
+        })
+        setTimeout(() => {
+            vm.name = 'gigi'
+        }, 1000);
+    </script>
+
+
+</body>
+
+</html>
