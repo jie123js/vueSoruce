@@ -3,21 +3,21 @@
     <!-- <ClickOutside></ClickOutside> -->
     <!-- <Lazy></Lazy> -->
 
-
-    <Form></Form>
-
+    <lazy></lazy>
   </div>
 </template>
 <script>
-import ClickOutside from  '@/components/click-outside.vue'
-import Form from '@/components/form.vue'
+import ClickOutside from "@/components/click-outside.vue";
+import Form from "@/components/form.vue";
+import Lazy from "./components/lazy.vue";
 // import Lazy from '@/components/lazy.vue'
 export default {
-    components:{
-      Form
+  components: {
+    Form,
+    Lazy,
 
-      // ClickOutside
-      // Lazy
-    }
-}
+    // ClickOutside
+    // Lazy
+  },
+};
 </script>
