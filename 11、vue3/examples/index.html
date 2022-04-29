@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <div id="app"></div>
+    <script>
+        const {
+            reactive,
+            readonly,
+            shallowReactive,
+            shallowReadonly,
+            effect
+        } = VueReactivity;
+        let obj = {
+            name: 'zf',
+            age: 12,
+            adress: {
+                add: 'LosAnger'
+            }
+        };
+        let r1 = reactive(obj)
+        // let r2 = readonly(obj)
+        // let r3 = shallowReactive(obj)
+        // let r4 = shallowReadonly(obj)
+        // console.log(r1);
+        // console.log(r1.name);
+        // console.log(r1 === r2);
+        // console.log(r1 === r2);
+        // console.log(r1.adress, r2.adress, r3.adress, r4.adress);
+        // r1.adress = 100
+        // r2.name = 'kobe'
+        effect(() => {
+            app.innerHTML = r1.name + r1.age + r1.name
+        })
+        setTimeout(() => {
+            r1.name = 'gigi'
+        }, 2000);
+    </script>
+</body>
+
+</html> =

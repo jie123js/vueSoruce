@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- <script src="../../../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+    <script src="./reactivity.global.js"></script>
+    <div id="app"></div>
+    <script>
+        // effect 代表的是副作用函数，如果此函数依赖的数据发生变化了 会重新执行
+        // reactive 将数据变成响应式  proxy
+
+        // shallowReactive,readonly,shallowReadonly 作业自己实现下，都是基于reactive的
+        const {effect,reactive} = VueReactivity;
+        const data = {name:'zf',age:13,address:{num:517}}
+        const state = reactive(data);
+        // vue3中的代理都是用proxy来解决的。
+
+        effect(()=>{ // 此effect函数默认会先执行一次， 对响应式数据取值(取值的过程中数据会依赖于当前的effecgt)
+            document.getElementById('app').innerHTML = state.name + '今年' + state.age +'岁了' + state.n
+
+        });
+
+        setTimeout(()=>{
+            state.age = 100
+            state.age = 200;
+        },1000)
+
+        // // 稍后name和age变化会重新执行effect函数
+        // setTimeout(()=>{
+        //     state.age = 14
+        // },1000)
+        
+    </script>
+</body>
+</html>

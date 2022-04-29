@@ -107,13 +107,3 @@ function lazy(Vue) {
   };
 }
 export default VueLazyload;
-
-let a = [1, 3, 5];
-let b = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 1, 1];
-let d = 0;
-let c = 0;
-while (c < a.length) {
-  d = d + (3 * c + 1);
-  c++;
-}
-console.log(d);

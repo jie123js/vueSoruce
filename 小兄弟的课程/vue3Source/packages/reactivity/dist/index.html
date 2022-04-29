@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+<script src="./reactivity.global.js"></script>
+<script>
+    const {
+        reactive,
+        effect
+    } = VueReactivity
+    let obj = {
+        name: 'zj',
+        age: 11,
+        flag: true
+    }
+    let r1 = reactive(obj)
+    /*   debugger
+    effect(() => {
+
+        console.log(r1.name);
+        console.log(r1.age);
+        // r1.age++
+        app.innerHTML = r1.age
+    })
+    setTimeout(() => {
+        r1.age++
+        r1.name = 1111
+    }, 2000);
+ */
+    //模拟清空
+    debugger
+    effect(() => {
+
+        console.log('render');
+        // r1.age++
+        app.innerHTML = r1.flag ? r1.name : r1.age
+    })
+
+
+
+    setTimeout(() => {
+
+        r1.flag = false;
+        setTimeout(() => {
+            console.log('理论不更新');
+
+            r1.name = 'gigi'
+        }, 2000)
+    }, 2000);
+</script>
+
+<body>
+
+</body>
+
+</html>

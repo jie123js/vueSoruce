@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+    <script>
+        const { reactive, readonly, toRaw, markRaw, effect, ref } = VueReactivity;
+        const state = reactive({name:'jw'})        
+        // proxy劫持的功能: 
+        // 1) 触发get，进行依赖收集
+       /*  debugger
+        state.name; */
+
+        // 2) 处理数组的includes方法等
+        // const data = {name:'jw'};
+        // const arr = reactive([data]); // 对象中套对象 在取值的时候会进行递归代理
+        // console.log(arr[0] === data); // 这里访问arr[0]的时候获取的是代理对象
+        // debugger
+        // 从对象上访问了includes属性 会走代理
+
+        // 这里调用includes 内部会将代理对象转换成原始对象，在进行处理 arr.includes 原始的不行再去调用代理过的
+        // console.log(arr.includes(data)); // 正常情况下不应该为true，所以要重写includes方法
+
+
+        // 3) 内置symbol的处理 __proto__ 这些不要处理了
+        // debugger
+        // console.log(state[Symbol.iterator]);
+        // console.log(state.__proto__)
+
+        
+        // 4) 不支持脱ref的情况
+        // let obj = reactive({name:ref('zf')});
+        // let n = obj.name
+
+        // const proxyArr = reactive([ref(1),2,3])
+        // debugger
+
+        // console.log(proxyArr[0]); // 这种情况不支持脱ref
+
+    </script>
+</body>
+</html>

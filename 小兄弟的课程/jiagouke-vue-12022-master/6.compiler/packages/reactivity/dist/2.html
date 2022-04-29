@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- <script src="../../../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+    <script src="./reactivity.global.js"></script>
+    <div id="app"></div>
+    <script>
+        let waiting = false;
+        const {effect,reactive} = VueReactivity;
+        const state = reactive({ flag: true, name: 'jw', age: 30,address:{num:10} })
+        let runner =  effect(() => { // 副作用函数 (effect执行渲染了页面)
+            document.body.innerHTML = state.age
+        },{
+            scheduler(){ // 调度 如何更新自己决定
+                console.log('run')
+                if(!waiting){
+                    waiting = true;
+                    setTimeout(()=>{
+                        runner();
+                        waiting = false;
+                    },1000)
+                }
+            }
+        });
+        console.log(state.address)
+    </script>
+</body>
+</html>

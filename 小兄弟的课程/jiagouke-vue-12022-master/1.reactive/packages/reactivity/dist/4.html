@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../../../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <!-- <script src="./reactivity.global.js"></script> -->
+    <div id="app"></div>
+    <div id="app2"></div>
+    <script>
+        let waiting = false;
+        const {effect,reactive,computed} = VueReactivity;
+        
+        const state  = reactive({name:'姜',address:'地支'});
+        effect(()=>{
+            app.innerHTML = `name:${state.name}`
+            effect(()=>{
+                console.log('run')
+                app2.innerHTML = `${state.address}`
+            })
+        })
+        setTimeout(()=>{
+            setTimeout(()=>{
+                state.name = '柱'
+            },1000)
+            
+
+            setTimeout(()=>{
+                state.address = 'WEN'
+            },3000)
+        },1000)
+
+
+
+
+    </script>
+</body>
+</html>

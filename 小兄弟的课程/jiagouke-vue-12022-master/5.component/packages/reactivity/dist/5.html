@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app"></div>
+    <!-- <script src="../../../node_modules/vue/dist/vue.global.js"></script> -->
+    <script src="./reactivity.global.js"></script>
+    <script>
+        const {ref,effect,reactive,toRefs,toRef} = VueReactivity; // 我们reactive他支持一个对象类型
+
+        const school = reactive({name:'zf',age:13});
+        // 结构后就丧失了响应式的特点了
+        // promisify promisifyAll
+        let {name,age} = toRefs(school)
+        // let name = toRef(school,'name');
+        // let age = toRef(school,'age');
+        effect(()=>{
+            app.innerHTML = `${name.value}今年${age.value}岁了`
+        });
+
+        // 正向的增加ref, 反向的帮你取ref
+
+        setTimeout(()=>{
+            age.value = 100;
+        },1000)
+
+        // const flag =  ref(false);
+
+        // effect(()=>{
+        //     app.innerHTML = flag.value ? '你好':'不好'
+        // });
+
+        // setTimeout(()=>{
+        //     flag.value = !flag.value
+        // },1000)
+    </script>
+</body>
+</html>
+

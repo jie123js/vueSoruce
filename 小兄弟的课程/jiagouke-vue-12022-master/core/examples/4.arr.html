@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+    <script>
+        // 数组依赖收集的方式
+        const { reactive, readonly, toRaw, markRaw, effect, ref } = VueReactivity;
+        // 1) 收集索引
+        // const arr = reactive([1]);
+        // effect(()=>{
+        //    // 通过索引访问可以收集依赖
+        //     console.log(arr[0]); // 这里没有收集length
+        // })
+        // // debugger; 
+        // // arr[0] = 2;  
+        // debugger
+        // arr.length = 0; //修改长度要触发索引的触发  改的是length
+
+        // 2) 长度收集
+        // const arr = reactive([1]);
+        // effect(()=>{
+        //     // 通过索引访问可以收集依赖
+        //     console.log(arr.length);
+        // })
+        // debugger
+        // arr[100] = 2; // 修改索引，如果是添加应该触发长度更新
+
+
+        // 3) 数组方法  访问变异方法会访问数组的长度，会对长度进行依赖，这里我们停止收集调用方法产生的依赖
+        // const arr = reactive([]);
+        // effect(()=>{
+        //     arr.push(1); // 会修改属性 同时 访问length
+        //     console.log('重新push')
+        // })  
+        // debugger
+        // arr.push(1); // 修改length
+
+    </script>
+</body>
+</html>

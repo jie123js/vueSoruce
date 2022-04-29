@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+    <script>
+        const { reactive, readonly, toRaw, markRaw, effect, ref } = VueReactivity;
+        // const state = reactive({name:'jw',a:readonly(ref(100))})   
+        // debugger
+        // state.a = ref(200);
+        // // delete state.name; // 添加deleteProperty
+       
+        // debugger
+        // 'name' in state; // 添加has
+
+        // debugger
+
+        // for(let key in state){} // 添加ownKeys
+
+        
+        // debugger
+        // state.name = 'super man'; // 添加set
+
+        // debugger
+        // let people = reactive({eat:'吃',drink:'喝'}); // 防止
+        // let person = reactive({eat:'吃'});
+
+        // Object.setPrototypeOf(person,people)
+        // effect(()=>{ //people收集一次  perso都会收集一次
+        //     console.log(person.eat,'触发几次'); // 这里访问的是person.eat
+        // })
+        // person.eat = '呵呵';
+
+        let obj = {};
+        let proto = {a:1}
+        let proxyProto = new Proxy(proto, {
+            get(target,key,receiver) {
+                return Reflect.get(target,key,receiver)
+            },
+            set(target,key,value,receiver){
+                // console.log(proxyProto , receiver == myProxy); // 这个地方要屏蔽的
+                return Reflect.set(target,key,value,receiver)// 不要考虑原型链的set
+            }
+        })
+        Object.setPrototypeOf(obj,proxyProto); // 给obj赋值会触发proxyProto的set
+        let myProxy = new Proxy(obj,{  // proxy(obj)
+            get(target,key,receiver) {
+                return Reflect.get(target,key,receiver)
+            },
+            set(target,key,value,receiver){
+                console.log(receiver === myProxy)
+                return Reflect.set(target,key,value,receiver); // 调用reflect.set 会触发原型链的set
+            }
+        })
+        myProxy.a = 100; // 内部的特点 
+
+        console.log(myProxy.a,proto)
+        // 多次触发更新
+
+
+
+
+    </script>
+</body>
+</html>

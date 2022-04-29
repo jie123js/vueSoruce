@@ -1,0 +1,108 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+    /* Projects */
+    // "incremental": true,                              /* 启用增量编译,生成存储编译信息的文件，下次编译采用增量编译 */
+    // "composite": true,                                /* 合并同类项 */
+    // "tsBuildInfoFile": "./",                          /* 增量编译文件存储位置 */
+    // "disableSourceOfProjectReferenceRedirect": true,  /* 禁用符合项目的源文件而不是声明文件 */
+    // "disableSolutionSearching": true,                 /* 忽略编辑器对于符合项目中的引用跳转提高响应能力. */
+    // "disableReferencedProjectLoad": true,             /* TypeScript 会将所有可用项目加载到内存中，禁用所有项目的自动加载 */
+    /* Language and Environment */
+    "target": "esnext" /* 设置打包的目标类型  ESNext */,
+    "lib": ["es6", "dom"] /* 引用的库 */,
+    // "jsx": "preserve",                                /*  一般设置成preserve表示ts不参与jsx编译 */
+    "experimentalDecorators": true /*  是否启用装饰器 */,
+    // "emitDecoratorMetadata": true,                    /* 是否支持装饰器元数据支持  */
+    // "jsxFactory": "",                                 /* 指定编译的工厂函数 */
+    // "jsxFragmentFactory": "",                         /* 指定对空标签的编译 */
+    // "jsxImportSource": "",                            /* Specify module specifier used to import the JSX factory functions when using `jsx: react-jsx*`.` */
+    // "reactNamespace": "",                             /* Specify the object invoked for `createElement`. This only applies when targeting `react` JSX emit. */
+    // "noLib": true,                                    /* 关闭lib选项 */
+    // "useDefineForClassFields": true,                  /* 对class中的field使用defineProperty. */
+    /* Modules */
+    "module": "esnext" /* 设置生成代码后的code模块格式 */,
+    // "rootDir": "./",                                  /* 编译文件的目录，一般不指定 */
+    "moduleResolution": "node" /* 模块解析方式 */,
+    "baseUrl": "./" /* 解析非相对模块的基准路径 */,
+    "paths": {
+      "*": ["types/*"],
+      "@/*": ["./src/*"]
+    } /* 路径映射  */,
+    "rootDirs": [] /* 虚拟路径解析， 这样引用的时候可以采用相对路径引用 */,
+    // "typeRoots": [],                                  /* 设置声明文件目录 `./node_modules/@types`. */
+    // "types": [],                                      /* 在这里声明的声明文件会被进行加载 */
+    // "allowUmdGlobalAccess": true,                     /* 允许访问umd全局属性 */
+    // "resolveJsonModule": true,                        /* 解析json模块 */
+    // "noResolve": true,                                /* 不检查 import require */
+    /* JavaScript Support */
+    // "allowJs": true,                                  /* 是否允许编译js文件 默认是false*/
+    // "checkJs": true,                                  /* 是否允许js的检测 默认false */
+    // "maxNodeModuleJsDepth": 1,                        /* 检查js文件的最大深度 需要allowJS */
+    /* Emit */
+    "declaration": true /* 编译的时候是否生成.d.ts文件 */,
+    // "declarationMap": true,                           /* 给.d.ts文件生成map文件 */
+    // "emitDeclarationOnly": true,                      /* 编译时只生成声明文件. */
+    // "sourceMap": true,                                /* 编译的时候是否生成.map文件 */
+    // "outFile": "./",                                  /* 将文件输出到一个文件中，基本用不到 只支持amd和systemjs模块 */
+    //  "outDir": "./a",                                   /* 输出到某个目录 */
+    // "removeComments": true,                           /* 输出后删除注释 */
+    // "noEmit": true,                                   /* 不生成编译文件 */
+    // "importHelpers": true,                            /* 是否引入tslib里的辅助函数， 类打包的时候公共方法 */
+    // "importsNotUsedAsValues": "remove",               /* 没有被使用的导入语句 */
+    // "downlevelIteration": true,                       /* 生成低端的代码 支持 for of, spread方法等 */
+    // "sourceRoot": "",                                 /* 调试的时候找到源ts文件 */
+    // "mapRoot": "",                                    /* 指定调试的时候映射文件，而非生成文件的位置*/
+    // "inlineSourceMap": true,                          /* 将sourcemap生成到js文件中 */
+    // "inlineSources": true,                            /* 将ts代码也放到sourcemap中 */
+    // "emitBOM": true,                                  /* 增加bom头*/
+    // "newLine": "crlf",                                /* 指定编译文件的换行符*/
+    // "stripInternal": true,                            /* 禁止在jsDoc中使用 @internal  */
+    // "noEmitHelpers": true,                            /* 禁用tslib中辅助函数，但是需要自己实现相关函数 */
+    // "noEmitOnError": true,                            /* 出错就不在进行编译了 */
+    // "preserveConstEnums": true,                       /* 保留常量枚举 */
+    "declarationDir": "./dist" /* 声明文件的生成目录 */,
+    // "preserveValueImports": true,                     /* Preserve unused imported values in the JavaScript output that would otherwise be removed. 在js中保留未使用的值 */
+    /* Interop Constraints */
+    // "isolatedModules": true,                          /* 确保每个文件都必须是一个模块*/
+    // "allowSyntheticDefaultImports": true,             /* 允许从没有默认导出的地方去导入文件*/
+    "esModuleInterop": true /* 实现commonjs 和 es模块之间互通 */,
+    // "preserveSymlinks": true,                         /* 保留符号链接 */
+    "forceConsistentCasingInFileNames": true /* 严格区分大小写文件名 */,
+    /* Type Checking */
+    "strict": false /* 启用所有的严格性检查 */,
+    // "noImplicitAny": true,                            /* 不能用默认类型 any. */
+    "strictNullChecks": true /* null 和 undefined 不能赋予给其他类型*/,
+    "strictFunctionTypes": true /* 是否使用函数参数双向协变*/,
+    // "strictBindCallApply": true,                      /* 严格检测 bind call apply参数 */
+    // "strictPropertyInitialization": true,             /* 验证构造函数内部初始化前后已定义的属性*/
+    // "noImplicitThis": true,                           /* this的值不能是any类型 */
+    // "useUnknownInCatchVariables": true,               /* 用unknown替代any */
+    // "alwaysStrict": true,                             /* 再生成的文件中增加strict:true */
+    // "noUnusedLocals": true,                           /* 检测定义了是否有没有使用的变量 */
+    // "noUnusedParameters": true,                       /* 检测函数的参数定义了没有使用 */
+    // "exactOptionalPropertyTypes": true,               /* 可选参数检查，不支持赋值为undefined */
+    // "noImplicitReturns": true,                        /* 检测函数是否有返回值 */
+    // "noFallthroughCasesInSwitch": true,               /* 检测switch case中 没有break跳出语句*/
+    // "noUncheckedIndexedAccess": true,                 /* 索引签名必须是带有undefined */
+    // "noImplicitOverride": true,                       /* 子类重写父类 需要添加override标识 */
+    // "noPropertyAccessFromIndexSignature": true,       /* 不存在的属性报错 */
+    // "allowUnusedLabels": true,                        /* 不报告未使用的标签错误. */
+    // "allowUnreachableCode": true,                     /* 不报告执行不到的代码错误。. */
+    /* Completeness */
+    // "skipDefaultLibCheck": true,                      /* 跳过过默认lib中的类型检测 */
+    "skipLibCheck": true /* 跳过检测d.ts文件 */
+  },
+  // "files":[ // 指定编译文件有哪些，默认编译所有
+  //   "./src/2.tsconfig.ts"
+  // ],
+  "include": [
+    "./src/**/*.ts", // 可以使用通配符
+    "types/5.声明文件编写.d.ts"
+  ],
+  "exclude": [
+    // 排除某些ts文件不进行编译
+    "./src/2.tsconfig.ts"
+  ]
+  // "extends":"./a.json",// 继承别人家的ts配置文件
+}

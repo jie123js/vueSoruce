@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../../../node_modules/vue/dist/vue.global.js"></script>
+    <script src="./reactivity.global.js"></script>
+    <script>
+        const {watch,reactive} = Vue;
+        const state = reactive({ flag: true, name: 'jw', age: 30 })
+        let i = 2000;
+        function getData(timer){
+            return new Promise((resolve,reject)=>{
+                setTimeout(() => {
+                    resolve(timer)
+                }, timer);
+            })
+        }
+        // 第一次调用watch的时候传入一个回调， 第二次调用watch的时候执行上一次传入的回调
+
+
+        // 1) 第一次调用watch的时候用户注入一个取消的回调
+        // 2) 第二次调用watch的时候会执行第一次用户注入的回调
+        // 3) 第三次调用watch会执行第二次注入的回调
+
+        // 后面的watch触发会将上次watch中的clear 置为true
+        watch(()=>state.age,async (newValue,oldValue,onCleanup)=>{
+            let clear = false;
+            onCleanup(()=>{
+                clear = true;
+            })
+            i-=1000;
+            let r =  await getData(i); // 第一次执行1s后渲染1000， 第二次执行0s后渲染0， 最终应该是0
+            if(!clear){document.body.innerHTML = r;}
+        },{flush:'sync'});
+        state.age = 31;
+        state.age = 32;
+        state.age = 33;
+        state.age = 34;
+        // 当用户像输入框中输入的时候 ， 我们要根据用户输入的内容 返回（ajax）结果
+
+        // watch 输入框的内容  输入框的内容一变化就访问接口，渲染页面？  防抖？
+        // 我  -> ajax 3s才能回来
+        // 我爱 -> ajax 2s就回来
+
+
+
+
+        // 监控对象无法区分前后的新值和老值
+        // const state = reactive({name:'jw',address:{num:1}});
+
+        // 1) 这种方式就是监控数据变化，数据变化了就重新执行
+        // 2) 这里可以去监控一个函数，函数的返回值就是老值，更新后获取新值
+        // watch(()=>state.address.num,function(newValue,oldValue){
+        //     console.log(newValue,oldValue); // 123 1    456 1
+        // })
+        // setTimeout(()=>{
+        //     state.address.num = 123
+           
+        // },1000);
+        // watch的本质就是effect。内部会对用户填写的数据进行依赖收集
+
+
+    </script>
+</body>
+</html>
