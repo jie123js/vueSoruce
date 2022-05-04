@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
     <!-- <script src="../../../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
     <script src="./reactivity.global.js"></script>
     <div id="app"></div>
     <script>
         let waiting = false;
-        const {effect,reactive,computed} = VueReactivity;
-        
-        const state  = reactive({firname:'姜',lastname:'文'});
+        const { effect, reactive, computed } = VueReactivity;
+
+        const state = reactive({ firname: '姜', lastname: '文' });
         // 这里
         // const fullName = computed({
         //     get(){ // defineProperty中的getter
@@ -25,19 +27,19 @@
         //         console.log(newValue)
         //     }
         // })
-        const fullName = computed( ()=>{ // defineProperty中的getter
+        const fullName = computed(() => { // defineProperty中的getter
             console.log('runner')
             return state.firname + state.lastname
         })
         // 计算属性的缓存问题
-        
-        effect(()=>{
+
+        effect(() => {
             app.innerHTML = fullName.value
         })
 
-        setTimeout(()=>{
+        setTimeout(() => {
             state.firname = '珠'
-        },1000)
+        }, 1000)
 
         // 1. firstname要依赖于计算属性的effect 
         // 2.计算属性收集了外层effect
@@ -49,7 +51,7 @@
 
         // fullName.value  =100;
         // fullName.value  =200;
-        // computed 特点：缓存  
+        // computed 特点：缓存
 
 
         // 计算属性中肯定要有一个缓存的标识 如果这个依赖有变化 要重新执行get，没有变化就不重新执行get
@@ -59,4 +61,5 @@
 
     </script>
 </body>
+
 </html>

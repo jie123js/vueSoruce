@@ -17,42 +17,51 @@
     let obj = {
         name: 'zj',
         age: 11,
-        flag: true
+        flag: true,
+        adress: {
+            home: 'china'
+        }
     }
     let r1 = reactive(obj)
-    /*   debugger
-    effect(() => {
 
-        console.log(r1.name);
-        console.log(r1.age);
+
+    let runner = effect(() => {
         // r1.age++
         app.innerHTML = r1.age
+    }, {
+        scheduler() {
+            app.innerHTML = 33
+            console.log(212)
+        }
     })
+    // runner.effect.stop()
     setTimeout(() => {
+
         r1.age++
-        r1.name = 1111
-    }, 2000);
- */
+        console.log(r1.age)
+
+    }, 1000);
+
     //模拟清空
-    debugger
-    effect(() => {
-
-        console.log('render');
-        // r1.age++
-        app.innerHTML = r1.flag ? r1.name : r1.age
-    })
-
-
-
-    setTimeout(() => {
-
-        r1.flag = false;
+    /*     debugger
+        effect(() => {
+    
+            console.log('render');
+            // r1.age++
+            app.innerHTML = r1.flag ? r1.name : r1.age
+        })
+    
+    
+    
         setTimeout(() => {
-            console.log('理论不更新');
-
-            r1.name = 'gigi'
-        }, 2000)
-    }, 2000);
+    
+            r1.flag = false;
+            setTimeout(() => {
+                console.log('理论不更新');
+    
+                r1.name = 'gigi'
+            }, 2000)
+        }, 2000); */
 </script>
 
 <body>

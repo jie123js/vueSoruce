@@ -12,13 +12,13 @@ class ReactiveEffect {
   public active = true; //相当于this.active = true
   public parent = null;
   public deps = []; //这个用于effect记录属性  多对多关系
-  constructor(public fn) {
+  constructor(public fn,public scheduler) {
     //加了public相当于this.fn=fn
   }
   run() {
     if (!this.active) {
       //如果非激活不用依赖收集
-      return this.fn;
+      return this.fn();
     }
     try {
       this.parent = activeEffect; //第一次是null  第二次进来因为上一次的还没执行好 记录下他的父亲
@@ -31,11 +31,21 @@ class ReactiveEffect {
       this.parent = null; //结束后没啥意义 清空就好了(可写可不写)
     }
   }
+  stop(){
+    if(this.active){
+      this.active = false
+      cleanupEffect(this)
+    }
+   
+  }
 }
 
-export function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+export function effect(fn,options:any={}) {
+  const _effect = new ReactiveEffect(fn,options.scheduler);
   _effect.run();
+  const runner = _effect.run.bind(_effect)
+  runner.effect = _effect
+  return runner
 }
 
 //todo 可能出现的bug
@@ -77,8 +87,12 @@ export function trigger(target, type, key, value, oldValue) {
     effects = new Set(effects); //或者 [...effects]  拷贝一份防止循环引用
     effects.forEach((effect) => {
       if (effect == activeEffect) return; //这个是防止死循环 一个优化
-
-      effect.run();
+      if(effect.scheduler){
+        effect.scheduler()
+      }else{
+        effect.run();
+      }
+     
     });
   }
   /*  effects &&
