@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+<script src="./reactivity.global.js"></script>
+<script>
+    const {
+        reactive,
+        effect,
+        computed
+    } = VueReactivity
+    let obj = {
+        name: 'zj',
+        age: 11,
+    }
+    let r1 = reactive(obj)
+
+    const fullName = computed(() => {
+        console.log('计算属性');
+        return r1.name + r1.age
+    })
+    effect(() => {
+
+        app.innerHTML = fullName.value
+    })
+
+    setTimeout(() => {
+        debugger
+        r1.name = 'zjj'
+
+        console.log(fullName.value);
+    }, 1000);
+</script>
+
+<body>
+
+</body>
+
+</html>

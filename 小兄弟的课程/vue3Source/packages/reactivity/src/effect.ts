@@ -8,11 +8,11 @@ function cleanupEffect(effect) {
   effect.deps.length = 0;
 }
 //todo TS中类的写法会有点不同
-class ReactiveEffect {
+export class ReactiveEffect {
   public active = true; //相当于this.active = true
   public parent = null;
   public deps = []; //这个用于effect记录属性  多对多关系
-  constructor(public fn,public scheduler) {
+  constructor(public fn, public scheduler) {
     //加了public相当于this.fn=fn
   }
   run() {
@@ -28,24 +28,23 @@ class ReactiveEffect {
       return this.fn();
     } finally {
       activeEffect = this.parent;
-      this.parent = null; //结束后没啥意义 清空就好了(可写可不写)
+      // this.parent = null; //结束后没啥意义 清空就好了(可写可不写)
     }
   }
-  stop(){
-    if(this.active){
-      this.active = false
-      cleanupEffect(this)
+  stop() {
+    if (this.active) {
+      this.active = false;
+      cleanupEffect(this);
     }
-   
   }
 }
 
-export function effect(fn,options:any={}) {
-  const _effect = new ReactiveEffect(fn,options.scheduler);
+export function effect(fn, options: any = {}) {
+  const _effect = new ReactiveEffect(fn, options.scheduler);
   _effect.run();
-  const runner = _effect.run.bind(_effect)
-  runner.effect = _effect
-  return runner
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
 }
 
 //todo 可能出现的bug
@@ -71,29 +70,26 @@ export function track(target, type, key) {
   if (!dep) {
     depsMap.set(key, (dep = new Set()));
   }
-  let shouldTrack = dep.has(activeEffect);
-  if (!shouldTrack) {
-    dep.add(activeEffect);
-    activeEffect.deps.push(dep); //之后清理的时候会用到,目前还没用到
-  }
+  trackEffects(dep);
 }
 //目前是单向记录,属性记住了effect,effect还没有记住属性
+
+export function trackEffects(dep) {
+  if (activeEffect) {
+    let shouldTrack = dep.has(activeEffect);
+    if (!shouldTrack) {
+      dep.add(activeEffect);
+      activeEffect.deps.push(dep); //之后清理的时候会用到,目前还没用到
+    }
+  }
+}
 
 export function trigger(target, type, key, value, oldValue) {
   const depsMap = targetMap.get(target);
   if (!depsMap) return; //触发的值不在模板中
   let effects = depsMap.get(key);
   if (effects) {
-    effects = new Set(effects); //或者 [...effects]  拷贝一份防止循环引用
-    effects.forEach((effect) => {
-      if (effect == activeEffect) return; //这个是防止死循环 一个优化
-      if(effect.scheduler){
-        effect.scheduler()
-      }else{
-        effect.run();
-      }
-     
-    });
+    triggerEffects(effects);
   }
   /*  effects &&
     effects.forEach((effect) => {
@@ -101,4 +97,16 @@ export function trigger(target, type, key, value, oldValue) {
 
       effect.run();
     }); */
+}
+
+export function triggerEffects(effects) {
+  effects = new Set(effects); //或者 [...effects]  拷贝一份防止循环引用
+  effects.forEach((effect) => {
+    if (effect == activeEffect) return; //这个是防止死循环 一个优化
+    if (effect.scheduler) {
+      effect.scheduler();
+    } else {
+      effect.run();
+    }
+  });
 }

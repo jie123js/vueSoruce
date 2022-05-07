@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+<script src="./reactivity.global.js"></script>
+<script>
+    const {
+        reactive,
+        effect,
+        watch
+    } = VueReactivity
+    let obj = {
+        name: 'zj',
+        age: 11,
+    }
+    let r1 = reactive(obj)
+    // watch(r1, (newValue, oldValue) => {
+    //     console.log(newValue, oldValue);
+    // })
+    // watch(() => r1.name, (newValue, oldValue) => {
+    //     console.log(newValue, oldValue);
+    // })
+    // setTimeout(() => {
+    //     r1.name = 'jz'
+    // }, 1000);
+    const state = reactive({
+        flag: true,
+        name: 'jw',
+        age: 30
+    })
+    let i = 2000;
+
+    function getData(timer) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve(timer)
+            }, timer);
+        })
+    }
+    watch(() => state.age, async (newValue, oldValue, onCleanup) => {
+        let clear = false;
+        onCleanup(() => {
+            clear = true;
+        })
+        i -= 1000;
+        let r = await getData(i); // 第一次执行1s后渲染1000， 第二次执行0s后渲染0， 最终应该是0
+        if (!clear) {
+            document.body.innerHTML = r;
+        }
+    }, {
+        flush: 'sync'
+    });
+    state.age = 31;
+    state.age = 32;
+</script>
+
+<body>
+
+</body>
+
+</html>

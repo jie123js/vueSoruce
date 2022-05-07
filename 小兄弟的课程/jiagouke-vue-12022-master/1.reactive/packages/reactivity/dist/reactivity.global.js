@@ -46,7 +46,6 @@ var VueReactivity = (() => {
       if (!this.active) {
         return this.fn();
       }
-      ;
       try {
         this.parent = activeEffect;
         activeEffect = this;
@@ -95,6 +94,7 @@ var VueReactivity = (() => {
   }
   function trigger(target, type, key, value, oldValue) {
     const depsMap = targetMap.get(target);
+    debugger;
     if (!depsMap)
       return;
     let effects = depsMap.get(key);

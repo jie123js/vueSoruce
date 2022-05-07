@@ -14,9 +14,16 @@
     <div id="app"></div>
     <script>
         let waiting = false;
-        const { effect, reactive, computed } = VueReactivity;
+        const {
+            effect,
+            reactive,
+            computed
+        } = VueReactivity;
 
-        const state = reactive({ firname: '姜', lastname: '文' });
+        const state = reactive({
+            firname: '姜',
+            lastname: '文'
+        });
         // 这里
         // const fullName = computed({
         //     get(){ // defineProperty中的getter
@@ -34,10 +41,12 @@
         // 计算属性的缓存问题
 
         effect(() => {
+            debugger
             app.innerHTML = fullName.value
         })
 
         setTimeout(() => {
+
             state.firname = '珠'
         }, 1000)
 
@@ -57,8 +66,6 @@
         // 计算属性中肯定要有一个缓存的标识 如果这个依赖有变化 要重新执行get，没有变化就不重新执行get
         // dirty 是否是脏的
         // 计算属性是一个effect， 依赖的属性变化了 会更新dirty的值
-
-
     </script>
 </body>
 
