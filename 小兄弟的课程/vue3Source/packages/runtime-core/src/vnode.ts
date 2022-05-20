@@ -1,11 +1,15 @@
 //type   props children
 
 import { isArray, isString, ShapeFlags } from "@vue/shared";
-
+export const Text = Symbol("Text"); //处理边界情况 如果孩子是文本  render(h(Text, 'hello'), app)
+export const Fragment = Symbol("Fragment");
 export function isVnode(value) {
   return !!(value && value.__v_isVnode);
 }
-
+export function isSameVnode(n1, n2) {
+  //是否相同  标签   key
+  return n1.type === n2.type && n1.key === n2.key;
+}
 // 1.
 // <div>
 //     <h1></h1>
