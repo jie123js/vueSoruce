@@ -1,4 +1,9 @@
-import { isString, ShapeFlags } from "@vue/shared";
+import { reactive, ReactiveEffect } from "@vue/reactivity";
+import { hasOwn, isNumber, isString, ShapeFlags } from "@vue/shared";
+import { updatePropertySignature } from "typescript";
+import { hasPropsChanged, initProps, updateProps } from "./componentProps";
+import { createComponentInstance, setupComponent } from "./components";
+import { queueJob } from "./scheduler";
 import { getSequence } from "./sequence";
 import { createVnode, Fragment, isSameVnode } from "./vnode";
 
@@ -18,7 +23,7 @@ export function createRenderer(renderOptions) {
   } = renderOptions;
   //边界处理 如果还是是文本就转一下
   const normalize = (children, i) => {
-    if (isString(children[i])) {
+    if (isString(children[i])||isNumber(children[i])) {
       let vnode = createVnode(Text, null, children[i]);
       children[i] = vnode;
     }
@@ -253,6 +258,165 @@ export function createRenderer(renderOptions) {
     }
   };
 
+  const mountComponent = (vnode, container, anchor) => {
+    // 1)创建一个组件实例
+    let instance = (vnode.components = createComponentInstance(vnode));
+
+    // 2)给实例上赋值
+
+    setupComponent(instance);
+
+    // 3)创造一个effect
+
+    setupRenderEffect(instance, container, anchor);
+
+    //todo 下面是没封装前的代码  上面把他封装出去 看起来不冗余点
+    // let { data = () => ({}), render, props: propsOptions = {} } = vnode.type;
+    // const state = reactive(data());
+
+    // let instance = {
+    //   //组件的实例
+    //   state,
+    //   vnode, //组件的虚拟节点
+    //   subtree: null, //渲染的组件内容
+    //   isMounted: false,
+    //   update: null,
+    //   propsOptions, //组件自身接受的props
+    //   props: {}, //父组件传来的
+    //   attrs: {}, //父组件传来的没有接受的
+    //   proxy: null, //这个值又包括data(state)里面的值也包括props里面的值
+    // };
+    // initProps(instance, vnode.props); //组件实例   父组件传过来的props
+
+    // instance.proxy = new Proxy(instance, {
+    //   get(target, key) {
+    //     const { state, props } = target;
+    //     if (state && hasOwn(state, key)) {
+    //       return state[key];
+    //     } else if (props && hasOwn(props, key)) {
+    //       return props[key];
+    //     }
+    //     //this.$attrs
+    //     let getter = publicPropertyMap[key]; //key是$attrs
+    //     if (getter) {
+
+    //       return getter(target);
+    //     }
+    //   },
+    //   //这里没有this问题不需要用Reflect
+    //   set(target, key, value) {
+    //     const { state, props } = target;
+    //     if (state && hasOwn(state, key)) {
+    //       state[key] = value;
+    //       return true;
+    //     } else if (props && hasOwn(props, key)) {
+    //       //用户不能修改子组件里面的props ,因为用户操作的this是代理对象proxy,这里我们屏蔽了set的更改
+    //       //但是instance.props 是可以拿到真实的props 这个是响应式的 可以修改的
+    //       console.warn("attempting to mutate prop" +  ' ' +   (key as string));
+    //       return false;
+    //     }
+    //     //attrs不用修改 因为是个方法
+    //     return true;
+    //   },
+    // });
+
+    // const componentUpdateFn = () => {
+    //   if (!instance.isMounted) {
+    //     //初始化
+    //     // const subtree = render.call(state) //作为this,后续会改
+    //     //不能再用state了 因为之前用state是因为还没有props属性现在加入了props
+    //     const subtree = render.call(instance.proxy);
+    //     patch(null, subtree, container, anchor); //创造了subtree的真实节点并且插入
+    //     instance.isMounted = true;
+    //     instance.subtree = subtree;
+    //   } else {
+    //     //组件内部更新
+    //     const subtree = render.call(instance.proxy);
+    //     patch(instance.subtree, subtree, container, anchor);
+    //     instance.subtree = subtree;
+    //   }
+    // };
+    // const effect = new ReactiveEffect(componentUpdateFn, () =>
+    //   queueJob(instance.update)
+    // );
+    // let update = (instance.update = effect.run.bind(effect)); //调用effect.run可以让组件强心重新渲染
+    // update();
+  };
+
+  const updateComponentPreRender = (instance,next)=>{
+    instance.next = null
+    instance.vnode = next //实例更新最新虚拟节点
+    updateProps(instance.props,next.props)
+  }
+
+  const setupRenderEffect = (instance, container, anchor) => {
+    const { render } = instance;
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        //初始化
+        // const subtree = render.call(state) //作为this,后续会改
+        //不能再用state了 因为之前用state是因为还没有props属性现在加入了props
+    
+        const subtree = render.call(instance.proxy);
+     
+        patch(null, subtree, container, anchor); //创造了subtree的真实节点并且插入
+        instance.isMounted = true;
+        instance.subtree = subtree;
+      } else {
+        //组件内部更新
+        let {next} = instance
+        if(next){
+          //更新前 需要拿到最新属性进行更新
+
+          updateComponentPreRender(instance,next)
+        }
+        const subtree = render.call(instance.proxy);
+        patch(instance.subtree, subtree, container, anchor);
+        instance.subtree = subtree;
+      }
+    };
+    const effect = new ReactiveEffect(componentUpdateFn, () =>
+      queueJob(instance.update)
+    );
+    let update = (instance.update = effect.run.bind(effect)); //调用effect.run可以让组件强心重新渲染
+    update();
+  };
+
+const shouldUpdeComponent=(n1,n2)=>{
+  const {props:prevProps,children:prevChildren} =n1
+  const {props:nextProps,children:nextChildren} =n2
+  if(prevProps ===nextProps) return false
+  if(prevChildren||nextChildren){ //这里是插槽
+    return true
+  }
+  return hasPropsChanged(prevProps,nextProps)
+}
+
+  const updateComponent = (n1,n2)=>{
+    //instance.props 是响应式的 而且可以更改 属性的更新会导致页面重新渲染
+    const instance = (n2.components = n1.components)//对于元素而言,复用的是dom,组件复用的是实例
+
+    // const {props:prevProps,children:prevChildren} =n1
+    // const {props:nextProps,children:nextChildren} =n2
+    //需要更新就强制调用update方法
+    if(shouldUpdeComponent(n1,n2)){
+      instance.next = n2 //将新的虚拟节点放到next上
+      instance.update()//统一组件更新逻辑
+    }
+
+    //这样写不够好看代码,因为组件更新还有插槽更新
+   // updateProps(instance,prevProps,nextProps) //属性更新
+  }
+
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 == null) {
+      mountComponent(n2, container, anchor);
+    } else {
+      //组件更新靠的是props
+      updateComponent(n1,n2)
+    }
+  };
+
   const patch = (n1, n2, container, anchor = null) => {
     //核心patch方法
     if (n1 === n2) return;
@@ -272,6 +436,8 @@ export function createRenderer(renderOptions) {
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor);
+        } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+          processComponent(n1, n2, container, anchor);
         }
     }
   };

@@ -1,6 +1,6 @@
 //type   props children
 
-import { isArray, isString, ShapeFlags } from "@vue/shared";
+import { isArray, isObject, isString, ShapeFlags } from "@vue/shared";
 export const Text = Symbol("Text"); //处理边界情况 如果孩子是文本  render(h(Text, 'hello'), app)
 export const Fragment = Symbol("Fragment");
 export function isVnode(value) {
@@ -22,7 +22,9 @@ export function isSameVnode(n1, n2) {
 //虚拟节点有很多: 组件的 元素的 文本的
 export function createVnode(type, props, children = null) {
   // 组合方案 shapeFlag  我想知道一个元素中包含的是一个还是多个儿子 比如上面的2个div
-  let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0; //先处理是字符串的如果是字符串表示是元素 元素就是1 否则就是文本0  比如(h('h1))这就是一个元素
+  let shapeFlag = 
+  isString(type) ? ShapeFlags.ELEMENT:
+   isObject(type)?ShapeFlags.STATEFUL_COMPONENT: 0; //先处理是字符串的如果是字符串表示是元素 元素就是1 否则就是文本0  比如(h('h1))这就是一个元素
   //虚拟DOM 可以跨平台 diff算法  性能好  真实DOM属性多
   const vnode = {
     type,

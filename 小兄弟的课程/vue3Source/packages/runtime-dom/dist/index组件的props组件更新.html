@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+
+<body>
+    <script src="./runtime-dom.global.js">
+
+    </script>
+    <script>
+        let {
+            render,
+            h,
+            createRenderer,
+            Text,
+            Fragment
+        } = VueRuntimeDOM
+        const Mycomponent = {
+            props:{
+                address:String
+            }, 
+            render(){
+               return h(Text,this.address)
+            }
+        }
+        //组件三大特性, 1)属性,属性变化组件如何更新 2)插槽 3)事件
+        const VueComponent = { //vue3兼容vue2写法
+            props: {
+                address: String
+            },
+            data(){
+                return{
+                    flag:false
+                }
+            },
+            render() {
+                
+
+                return h(Fragment,[
+                    h('button',{onClick:()=>{debugger;this.flag=!this.flag}},'切换渲染'),
+                    h(Mycomponent,{address:this.flag?'地球':'月球'})
+                ])
+            }
+             
+
+        }
+        //用户接受的是props,没有写props的就是attrs
+        //组件是单向数据流,不能改变父亲的属性,会警告
+        render(h(VueComponent), app)
+    </script>
+</body>
+
+</html>
