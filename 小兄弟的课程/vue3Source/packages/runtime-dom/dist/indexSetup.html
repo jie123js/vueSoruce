@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+
+<body>
+    <script src="./runtime-dom.global.js">
+
+    </script>
+    <script>
+        let {
+            render,
+            h,
+            createRenderer,
+            Text,
+            Fragment,
+            ref
+        } = VueRuntimeDOM
+        const VueComponent = { //vue3兼容vue2写法
+            props: {
+                address: String
+            },
+            setup(props) {
+                const age = ref(13)
+                const name = ref('kobe')
+                setTimeout(() => {
+                    age.value++
+                }, 1000);
+                return () => {
+                    return h('p', name.value + age.value)
+                }
+            },
+            // render() {
+            //     return h(Fragment,[this.name,this.age,this.address])
+            // }
+
+
+        }
+        //组件三大特性, 1)属性,属性变化组件如何更新 2)插槽 3)事件
+        // const VueComponent = { //vue3兼容vue2写法
+        //     props: {
+        //         address: String
+        //     },
+        //     setup(props) {
+        //         const age = ref(13)
+        //         const name = ref('kobe')
+        //         return {
+        //             age,
+        //             name,
+        //             address: props.address
+        //         }
+        //     },
+        //     render() {
+        //         return h(Fragment, [this.name, this.age, this.address])
+        //     }
+
+
+        // }
+        //用户接受的是props,没有写props的就是attrs
+        //组件是单向数据流,不能改变父亲的属性,会警告
+        render(h(VueComponent, {
+            address: 'nba'
+        }), app)
+    </script>
+</body>
+
+</html>
