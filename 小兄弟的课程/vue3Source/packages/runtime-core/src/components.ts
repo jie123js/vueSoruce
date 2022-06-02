@@ -1,7 +1,11 @@
 import { reactive } from "@vue/reactivity";
-import { hasOwn, isFunction, isObject } from "@vue/shared";
+import { hasOwn, isFunction, isObject, ShapeFlags } from "@vue/shared";
 import { proxyRefs } from "packages/reactivity/src/ref";
 import { initProps } from "./componentProps";
+
+export let currentInstance = null;
+export const setCurrentInstance = (instance) => (currentInstance = instance);
+export const getCurrentInstance = () => currentInstance;
 
 export function createComponentInstance(vnode) {
   let instance = {
@@ -17,12 +21,14 @@ export function createComponentInstance(vnode) {
     proxy: null, //这个值又包括data(state)里面的值也包括props里面的值
     render: null,
     setupState: {},
+    slots: {},
   };
   return instance;
 }
 
 const publicPropertyMap = {
   $attrs: (i) => i.attrs,
+  $slots: (i) => i.slots,
 };
 
 const publicInstanceProcy = {
@@ -36,6 +42,7 @@ const publicInstanceProcy = {
       return props[key];
     }
     //this.$attrs
+    //this.$slots
     let getter = publicPropertyMap[key]; //key是$attrs
     if (getter) {
       return getter(target);
@@ -61,9 +68,18 @@ const publicInstanceProcy = {
     return true;
   },
 };
+
+function initSlot(instance, children) {
+  if (instance.vnode.shapeFlag & ShapeFlags.SLOTS_CHILDREN) {
+    instance.slots = children; //保留
+  }
+}
+
 export function setupComponent(instance) {
-  let { props, type } = instance.vnode;
+  let { props, type, children } = instance.vnode;
   initProps(instance, props);
+
+  initSlot(instance, children);
 
   instance.proxy = new Proxy(instance, publicInstanceProcy);
 
@@ -76,8 +92,25 @@ export function setupComponent(instance) {
   }
   let setup = type.setup;
   if (setup) {
-    const setupContext = {};
+    const setupContext = {
+      //典型的发布订阅模式
+      //todo自定义事件其实就是靠props实现的
+      emit: (event, ...args) => {
+        const eventName = `on${event[0].toUpperCase() + event.slice(1)}`;
+        //找到虚拟节点的属性 有存放props的
+        const handler = instance.vnode.props[eventName];
+        handler && handler(...args);
+      },
+      attrs: instance.attrs,
+      slots: instance.slots,
+    };
+
+    setCurrentInstance(instance);
+
     const setupResult = setup(instance.props, setupContext);
+
+    setCurrentInstance(null);
+
     if (isFunction(setupResult)) {
       instance.render = setupResult;
     } else if (isObject(setupResult)) {

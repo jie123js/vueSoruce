@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+
+<body>
+    <script src="./runtime-dom.global.js">
+
+    </script>
+    <script>
+        let {
+            render,
+            h,
+            createRenderer,
+            Text,
+            Fragment,
+            ref
+        } = VueRuntimeDOM
+        //组件的插槽是一个对象,放着映射关系,渲染组件的时候去映射表中查找
+        const MyComponent = {
+            render() {
+                return h(Fragment, [h('div', this.$slots.header()),
+                    h('div', this.$slots.footer())
+                ])
+            }
+        }
+        const VueComponent = { //vue3兼容vue2写法
+            render() {
+                return h(MyComponent, null, {
+                    header: () => h('p', 'header'),
+                    footer: () => h('p', 'footer')
+                })
+            }
+        }
+        //vue里面@绑定的事件会变成onX
+        render(h(VueComponent, {
+            onXxx: (value) => alert(value)
+        }), app)
+    </script>
+</body>
+
+</html>

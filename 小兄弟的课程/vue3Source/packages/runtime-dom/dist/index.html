@@ -22,89 +22,92 @@
             Fragment
         } = VueRuntimeDOM
 
-        // render(h('div', {
-        //     style: {
-        //         'color': 'red'
-        //     },
-        //     onClick: () => {
-        //         alert(1)
-        //     }
-        // }, [h('h1', 123), '456']), app)
-        // render(h(Text, 'hello'), app)
-        // render(h(Text, 321), app)
-        // render(h(Text, 32221), app)
-        // render(h('h1', {
-        //     style: {
-        //         color: 'red',
-        //     }
-        // }, [h('li', {
-        //         style: {
-        //             color: 'skyblue',
-        //         },
-        //         key: 'a'
-        //     }, 'a'),
-        //     h('li', {
-        //         key: 'b'
-        //     }, 'b'),
-        //     h('li', {
-        //         key: 'c'
-        //     }, 'c'),
-        //     h('li', {
-        //         style: {
-        //             color: 'skyblue',
-        //         },
-        //         key: 'd'
-        //     }, 'd'),
-        //     h('li', {
-        //         key: 'e'
-        //     }, 'e'),
-        //     h('li', {
-        //         key: 'f'
-        //     }, 'f'),
-        //     h('li', {
-        //         key: 'g'
-        //     }, 'g'),
-        // ]), app)
-
-        // setTimeout(() => {
-        //     render(h('h1', {
-        //         style: {
-
-
-        //         }
-        //     }, [h('li', {
-        //             key: 'a'
-        //         }, 'a'),
-        //         h('li', {
-        //             key: 'b'
-        //         }, 'b'),
-        //         h('li', {
-
-        //             key: 'e'
-        //         }, 'e'),
-        //         h('li', {
-        //             key: 'c'
-        //         }, 'c'),
-        //         h('li', {
-        //             key: 'd'
-        //         }, 'd'),
-        //         h('li', {
-        //             key: 'h'
-        //         }, 'h'),
-        //         h('li', {
-        //             key: 'f'
-        //         }, 'f'),
-        //         h('li', {
-        //             key: 'g'
-        //         }, 'g'),
-        //     ]), app)
-
-        // }, 2000);
-        render(h(Fragment, [h(Text, 'hello'), h('h2', {
+        render(h('div', {
             style: {
-                color: 'red'
+                'color': 'red'
+            },
+            onClick: () => {
+                alert(1)
             }
-        }, [h(Text, 122)])]), app)
+        }, [h('h1', 123), '456']), app)
+        render(h(Text, 'hello'), app)
+        render(h(Text, 321), app)
+        render(h(Text, 32221), app)
+        render(h('h1', {
+            style: {
+                color: 'red',
+            }
+        }, [h('li', {
+                style: {
+                    color: 'skyblue',
+                },
+                key: 'a'
+            }, 'a'),
+            h('li', {
+                key: 'b'
+            }, 'b'),
+            h('li', {
+                key: 'c'
+            }, 'c'),
+            h('li', {
+                style: {
+                    color: 'skyblue',
+                },
+                key: 'd'
+            }, 'd'),
+            h('li', {
+                key: 'e'
+            }, 'e'),
+            h('li', {
+                key: 'f'
+            }, 'f'),
+            h('li', {
+                key: 'g'
+            }, 'g'),
+        ]), app)
+
+        setTimeout(() => {
+            console.log(`avc
+            
+            sfs`);
+            render(h('h1', {
+                style: {
+
+
+                }
+            }, [h('li', {
+                    key: 'a'
+                }, 'a'),
+                h('li', {
+                    key: 'b'
+                }, 'b'),
+                h('li', {
+
+                    key: 'e'
+                }, 'e'),
+                h('li', {
+                    key: 'c'
+                }, 'c'),
+                h('li', {
+                    key: 'd'
+                }, 'd'),
+                h('li', {
+                    key: 'h'
+                }, 'h'),
+                h('li', {
+                    key: 'f'
+                }, 'f'),
+                h('li', {
+                    key: 'g'
+                }, 'g'),
+            ]), app)
+
+        }, 2000);
+        // render(h(Fragment, [h(Text, 'hello'), h('h2', {
+        //     style: {
+        //         color: 'red'
+        //     }
+        // }, [h(Text, 122)])]), app)
     </script>
 </body>
 

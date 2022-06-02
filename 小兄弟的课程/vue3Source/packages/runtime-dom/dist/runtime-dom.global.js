@@ -21,19 +21,33 @@ var VueRuntimeDOM = (() => {
   var src_exports = {};
   __export(src_exports, {
     Fragment: () => Fragment,
+    LifecycleHooks: () => LifecycleHooks,
     ReactiveEffect: () => ReactiveEffect,
     Text: () => Text2,
     activeEffect: () => activeEffect,
     computed: () => computed,
+    createComponentInstance: () => createComponentInstance,
+    createElementBlock: () => createElementBlock,
+    createElementVNode: () => createVnode,
     createRenderer: () => createRenderer,
     createVnode: () => createVnode,
+    currentInstance: () => currentInstance,
     effect: () => effect,
+    getCurrentInstance: () => getCurrentInstance,
     h: () => h,
     isSameVnode: () => isSameVnode,
     isVnode: () => isVnode,
+    onBeforeMount: () => onBeforeMount,
+    onBeforeUpdate: () => onBeforeUpdate,
+    onMounted: () => onMounted,
+    onUpdated: () => onUpdated,
+    openBlock: () => openBlock,
     reactive: () => reactive,
     ref: () => ref,
     render: () => render,
+    setCurrentInstance: () => setCurrentInstance,
+    setupComponent: () => setupComponent,
+    toDisplayString: () => toDisplayString,
     toRefs: () => toRefs,
     track: () => track,
     trackEffects: () => trackEffects,
@@ -56,6 +70,11 @@ var VueRuntimeDOM = (() => {
     return typeof value === "function";
   };
   var isArray = Array.isArray;
+  var invokeArrayFns = (fns) => {
+    for (let i = 0; i < fns.length; i++) {
+      fns[i]();
+    }
+  };
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var hasOwn = (value, key) => {
     return hasOwnProperty.call(value, key);
@@ -385,6 +404,9 @@ var VueRuntimeDOM = (() => {
   }
 
   // packages/runtime-core/src/components.ts
+  var currentInstance = null;
+  var setCurrentInstance = (instance) => currentInstance = instance;
+  var getCurrentInstance = () => currentInstance;
   function createComponentInstance(vnode) {
     let instance = {
       data: null,
@@ -397,12 +419,14 @@ var VueRuntimeDOM = (() => {
       attrs: {},
       proxy: null,
       render: null,
-      setupState: {}
+      setupState: {},
+      slots: {}
     };
     return instance;
   }
   var publicPropertyMap = {
-    $attrs: (i) => i.attrs
+    $attrs: (i) => i.attrs,
+    $slots: (i) => i.slots
   };
   var publicInstanceProcy = {
     get(target, key) {
@@ -434,9 +458,15 @@ var VueRuntimeDOM = (() => {
       return true;
     }
   };
+  function initSlot(instance, children) {
+    if (instance.vnode.shapeFlag & 32 /* SLOTS_CHILDREN */) {
+      instance.slots = children;
+    }
+  }
   function setupComponent(instance) {
-    let { props, type } = instance.vnode;
+    let { props, type, children } = instance.vnode;
     initProps(instance, props);
+    initSlot(instance, children);
     instance.proxy = new Proxy(instance, publicInstanceProcy);
     let data = type.data;
     if (data) {
@@ -447,8 +477,18 @@ var VueRuntimeDOM = (() => {
     }
     let setup = type.setup;
     if (setup) {
-      const setupContext = {};
+      const setupContext = {
+        emit: (event, ...args) => {
+          const eventName = `on${event[0].toUpperCase() + event.slice(1)}`;
+          const handler = instance.vnode.props[eventName];
+          handler && handler(...args);
+        },
+        attrs: instance.attrs,
+        slots: instance.slots
+      };
+      setCurrentInstance(instance);
       const setupResult = setup(instance.props, setupContext);
+      setCurrentInstance(null);
       if (isFunction(setupResult)) {
         instance.render = setupResult;
       } else if (isObject(setupResult)) {
@@ -536,7 +576,7 @@ var VueRuntimeDOM = (() => {
   function isSameVnode(n1, n2) {
     return n1.type === n2.type && n1.key === n2.key;
   }
-  function createVnode(type, props, children = null) {
+  function createVnode(type, props, children = null, patchFlag) {
     let shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
     const vnode = {
       type,
@@ -545,19 +585,40 @@ var VueRuntimeDOM = (() => {
       el: null,
       key: props == null ? void 0 : props["key"],
       __v_isVnode: true,
-      shapeFlag
+      shapeFlag,
+      patchFlag
     };
     if (children) {
       let type2 = 0;
       if (isArray(children)) {
         type2 = 16 /* ARRAY_CHILDREN */;
+      } else if (isObject(children)) {
+        type2 = 32 /* SLOTS_CHILDREN */;
       } else {
         children = String(children);
         type2 = 8 /* TEXT_CHILDREN */;
       }
       vnode.shapeFlag = vnode.shapeFlag | type2;
     }
+    if (currentBlock && vnode.patchFlag > 0) {
+      currentBlock.push(vnode);
+    }
     return vnode;
+  }
+  var currentBlock = null;
+  function openBlock() {
+    currentBlock = [];
+  }
+  function createElementBlock(type, props, children, patchFlag) {
+    return setupBlock(createVnode(type, props, children, patchFlag));
+  }
+  function setupBlock(vnode) {
+    vnode.dynamicChildren = currentBlock;
+    currentBlock = [];
+    return vnode;
+  }
+  function toDisplayString(val) {
+    return isString(val) ? val : val == null ? "" : isObject(val) ? JSON.stringify(val) : String(val);
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -733,12 +794,28 @@ var VueRuntimeDOM = (() => {
         }
       }
     };
+    function patchBlockChildren(n1, n2) {
+      for (let i = 0; i < n2.dynamicChildren.length; i++) {
+        patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i]);
+      }
+    }
     const patchElement = (n1, n2, container) => {
       let el = n2.el = n1.el;
       let oldProps = n1.props || {};
       let newProps = n2.props || {};
-      patchProps(oldProps, newProps, el);
-      patchChildren(n1, n2, el);
+      let { patchFlag } = n2;
+      if (patchFlag & 2 /* CLASS */) {
+        if (oldProps.class !== newProps) {
+          hostPatchProp(el, "class", null, newProps.class);
+        }
+      } else {
+        patchProps(oldProps, newProps, el);
+      }
+      if (n2.dynamicChildren) {
+        patchBlockChildren(n1, n2);
+      } else {
+        patchChildren(n1, n2, el);
+      }
     };
     const processElement = (n1, n2, container, anchor) => {
       if (n1 === null) {
@@ -768,17 +845,30 @@ var VueRuntimeDOM = (() => {
       const { render: render3 } = instance;
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
-          const subtree = render3.call(instance.proxy);
+          let { bm, m } = instance;
+          if (bm) {
+            invokeArrayFns(bm);
+          }
+          const subtree = render3.call(instance.proxy, instance.proxy);
           patch(null, subtree, container, anchor);
+          if (m) {
+            invokeArrayFns(m);
+          }
           instance.isMounted = true;
           instance.subtree = subtree;
         } else {
-          let { next } = instance;
+          let { next, bu, u } = instance;
           if (next) {
             updateComponentPreRender(instance, next);
           }
-          const subtree = render3.call(instance.proxy);
+          if (bu) {
+            invokeArrayFns(bu);
+          }
+          const subtree = render3.call(instance.proxy, instance.proxy);
           patch(instance.subtree, subtree, container, anchor);
+          if (u) {
+            invokeArrayFns(u);
+          }
           instance.subtree = subtree;
         }
       };
@@ -872,6 +962,30 @@ var VueRuntimeDOM = (() => {
       return createVnode(type, propsChildren, children);
     }
   }
+
+  // packages/runtime-core/src/apiLifecyle.ts
+  var LifecycleHooks = /* @__PURE__ */ ((LifecycleHooks2) => {
+    LifecycleHooks2["BEFORE_MOUNT"] = "bm";
+    LifecycleHooks2["MOUNTED"] = "m";
+    LifecycleHooks2["BEFORE_UPDATE"] = "bu";
+    LifecycleHooks2["UPDATED"] = "u";
+    return LifecycleHooks2;
+  })(LifecycleHooks || {});
+  function createHook(type) {
+    return (hook, target = currentInstance) => {
+      const hooks = target[type] || (target[type] = []);
+      const wrappedHook = () => {
+        setCurrentInstance(target);
+        hook();
+        setCurrentInstance(null);
+      };
+      hooks.push(wrappedHook);
+    };
+  }
+  var onBeforeMount = createHook("bm" /* BEFORE_MOUNT */);
+  var onMounted = createHook("m" /* MOUNTED */);
+  var onBeforeUpdate = createHook("bu" /* BEFORE_UPDATE */);
+  var onUpdated = createHook("u" /* UPDATED */);
 
   // packages/runtime-dom/src/nodeOps.ts
   var nodeOps = {

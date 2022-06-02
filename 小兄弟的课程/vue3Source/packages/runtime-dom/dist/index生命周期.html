@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+
+<body>
+    <script src="./runtime-dom.global.js">
+
+    </script>
+    <script>
+        let {
+            render,
+            h,
+            createRenderer,
+            Text,
+            Fragment,
+            ref,
+            onBeforeMount,
+            onMounted,
+            onBeforeUpdate,
+            onUpdated,
+            reactive,
+            getCurrentInstance
+        } = VueRuntimeDOM
+        debugger
+        const useCounter = () => {
+            const state = reactive({
+                count: 1
+            })
+            const handleClick = (value) => {
+                state++
+            }
+
+            onBeforeMount(() => {
+                console.log('inBefo')
+            });
+            onMounted(() => {
+                console.log(getCurrentInstance());
+                console.log('onMounted')
+            });
+            onBeforeUpdate(() => {
+                console.log('onBeforeUpdate');
+            });
+            onUpdated(() => {
+                console.log('onUpdated');
+            });
+            return {
+                state,
+                handleClick
+            }
+
+
+        }
+        const VueComponent = {
+
+
+            setup(props) { //生命周期的钩子只能在setup中使用
+                const state1 = reactive({
+                    name: 'zj'
+                })
+                const {
+                    state: counter,
+                    handleClick
+                } = useCounter()
+                console.log(counter);
+                console.log(state1);
+                return {
+                    state1,
+                    counter,
+                    handleClick
+                }
+            },
+
+            render() {
+                return h('p', {
+                    onClick: this.handleClick
+                }, this.state1.name + this.counter.count)
+            }
+        }
+
+        //vue里面@绑定的事件会变成onX
+        render(h(VueComponent), app)
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="./compiler-core.global.js"></script>
+    <script>
+        let {
+            compile
+        } = VueCompilerCore
+        //解析规则就是已更改字符来进行判断,并且解析完毕后就删除掉
+        let r = compile(`a
+        
+        bc <div></div>{{data}}`)
+        console.log(r);
+    </script>
+</body>
+
+</html>

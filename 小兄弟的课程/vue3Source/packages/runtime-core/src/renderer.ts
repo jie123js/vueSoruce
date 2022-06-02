@@ -1,5 +1,12 @@
 import { reactive, ReactiveEffect } from "@vue/reactivity";
-import { hasOwn, isNumber, isString, ShapeFlags } from "@vue/shared";
+import {
+  hasOwn,
+  invokeArrayFns,
+  isNumber,
+  isString,
+  PatchFlags,
+  ShapeFlags,
+} from "@vue/shared";
 import { updatePropertySignature } from "typescript";
 import { hasPropsChanged, initProps, updateProps } from "./componentProps";
 import { createComponentInstance, setupComponent } from "./components";
@@ -23,7 +30,7 @@ export function createRenderer(renderOptions) {
   } = renderOptions;
   //边界处理 如果还是是文本就转一下
   const normalize = (children, i) => {
-    if (isString(children[i])||isNumber(children[i])) {
+    if (isString(children[i]) || isNumber(children[i])) {
       let vnode = createVnode(Text, null, children[i]);
       children[i] = vnode;
     }
@@ -233,13 +240,40 @@ export function createRenderer(renderOptions) {
       }
     }
   };
-  const patchElement = (n1, n2, container) => {
+
+  function patchBlockChildren(n1, n2) {
+    for (let i = 0; i < n2.dynamicChildren.length; i++) {
+      //以前是树的递归,现在是数组比较
+
+      patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i]);
+    }
+  }
+
+  const patchElement = (n1, n2, container?) => {
     //先复用节点,再比较属性
+
     let el = (n2.el = n1.el);
     let oldProps = n1.props || {};
     let newProps = n2.props || {};
-    patchProps(oldProps, newProps, el);
-    patchChildren(n1, n2, el);
+
+    let { patchFlag } = n2;
+
+    if (patchFlag & PatchFlags.CLASS) {
+      if (oldProps.class !== newProps) {
+        hostPatchProp(el, "class", null, newProps.class);
+      }
+      //这里还可以有style 事件等的靶向更新
+    } else {
+      patchProps(oldProps, newProps, el);
+    }
+
+    if (n2.dynamicChildren) {
+      //元素之间的更新优化,靶向更新
+      patchBlockChildren(n1, n2);
+    } else {
+      //这个是全量比对,没用靶向更新
+      patchChildren(n1, n2, el);
+    }
   };
   const processElement = (n1, n2, container, anchor) => {
     if (n1 === null) {
@@ -343,11 +377,11 @@ export function createRenderer(renderOptions) {
     // update();
   };
 
-  const updateComponentPreRender = (instance,next)=>{
-    instance.next = null
-    instance.vnode = next //实例更新最新虚拟节点
-    updateProps(instance.props,next.props)
-  }
+  const updateComponentPreRender = (instance, next) => {
+    instance.next = null;
+    instance.vnode = next; //实例更新最新虚拟节点
+    updateProps(instance.props, next.props);
+  };
 
   const setupRenderEffect = (instance, container, anchor) => {
     const { render } = instance;
@@ -356,22 +390,41 @@ export function createRenderer(renderOptions) {
         //初始化
         // const subtree = render.call(state) //作为this,后续会改
         //不能再用state了 因为之前用state是因为还没有props属性现在加入了props
-    
-        const subtree = render.call(instance.proxy);
-     
+
+        let { bm, m } = instance;
+
+        if (bm) {
+          invokeArrayFns(bm);
+        }
+
+        const subtree = render.call(instance.proxy, instance.proxy);
+
         patch(null, subtree, container, anchor); //创造了subtree的真实节点并且插入
+
+        if (m) {
+          invokeArrayFns(m);
+        }
+
         instance.isMounted = true;
         instance.subtree = subtree;
       } else {
         //组件内部更新
-        let {next} = instance
-        if(next){
+        let { next, bu, u } = instance;
+        if (next) {
           //更新前 需要拿到最新属性进行更新
 
-          updateComponentPreRender(instance,next)
+          updateComponentPreRender(instance, next);
         }
-        const subtree = render.call(instance.proxy);
+        if (bu) {
+          invokeArrayFns(bu);
+        }
+
+        const subtree = render.call(instance.proxy, instance.proxy);
         patch(instance.subtree, subtree, container, anchor);
+
+        if (u) {
+          invokeArrayFns(u);
+        }
         instance.subtree = subtree;
       }
     };
@@ -382,38 +435,39 @@ export function createRenderer(renderOptions) {
     update();
   };
 
-const shouldUpdeComponent=(n1,n2)=>{
-  const {props:prevProps,children:prevChildren} =n1
-  const {props:nextProps,children:nextChildren} =n2
-  if(prevProps ===nextProps) return false
-  if(prevChildren||nextChildren){ //这里是插槽
-    return true
-  }
-  return hasPropsChanged(prevProps,nextProps)
-}
+  const shouldUpdeComponent = (n1, n2) => {
+    const { props: prevProps, children: prevChildren } = n1;
+    const { props: nextProps, children: nextChildren } = n2;
+    if (prevProps === nextProps) return false;
+    if (prevChildren || nextChildren) {
+      //这里是插槽
+      return true;
+    }
+    return hasPropsChanged(prevProps, nextProps);
+  };
 
-  const updateComponent = (n1,n2)=>{
+  const updateComponent = (n1, n2) => {
     //instance.props 是响应式的 而且可以更改 属性的更新会导致页面重新渲染
-    const instance = (n2.components = n1.components)//对于元素而言,复用的是dom,组件复用的是实例
+    const instance = (n2.components = n1.components); //对于元素而言,复用的是dom,组件复用的是实例
 
     // const {props:prevProps,children:prevChildren} =n1
     // const {props:nextProps,children:nextChildren} =n2
     //需要更新就强制调用update方法
-    if(shouldUpdeComponent(n1,n2)){
-      instance.next = n2 //将新的虚拟节点放到next上
-      instance.update()//统一组件更新逻辑
+    if (shouldUpdeComponent(n1, n2)) {
+      instance.next = n2; //将新的虚拟节点放到next上
+      instance.update(); //统一组件更新逻辑
     }
 
     //这样写不够好看代码,因为组件更新还有插槽更新
-   // updateProps(instance,prevProps,nextProps) //属性更新
-  }
+    // updateProps(instance,prevProps,nextProps) //属性更新
+  };
 
   const processComponent = (n1, n2, container, anchor) => {
     if (n1 == null) {
       mountComponent(n2, container, anchor);
     } else {
       //组件更新靠的是props
-      updateComponent(n1,n2)
+      updateComponent(n1, n2);
     }
   };
 
