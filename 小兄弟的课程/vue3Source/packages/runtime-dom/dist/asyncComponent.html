@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+    <div id="root"></div>
+    <div id="abc"></div>
+</head>
+
+<body>
+    <script src="./runtime-dom.global.js">
+
+    </script>
+    <script>
+        let {
+            render,
+            h,
+            ref,
+            createRenderer,
+            Text,
+            Fragment,
+            inject,
+            provide,
+            reactive ,
+            getCurrentInstance,
+            Teleport,
+            defineAsyncComponent,
+            
+        } = VueRuntimeDOM
+
+     
+        const Mycomponent = {
+            render(){
+               return h('h1','hello')
+            }
+        }
+        const ErrComponent = {
+            render(){
+               return h('h1','错误')
+            }
+        }
+        const LoadingComponent = {
+            render(){
+               return h('h1','LOading')
+            }
+        }
+        let asyncComponent = defineAsyncComponent({
+            loader:()=>new Promise((resolve,reject)=>{
+                setTimeout(()=>{
+                    reject(Mycomponent)
+                },3000)
+            }),
+            timeout:2000,
+            delay:1000,
+            loadingComponent:LoadingComponent,
+            errorComponent:ErrComponent,
+            onError(err,retry,fail){
+                console.log('失败了加载重试中');
+                retry()
+            }
+
+        })
+        //用户接受的是props,没有写props的就是attrs
+        //组件是单向数据流,不能改变父亲的属性,会警告
+        render(h(asyncComponent), app)
+    </script>
+</body>
+
+</html>
+

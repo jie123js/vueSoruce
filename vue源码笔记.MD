@@ -29,7 +29,7 @@
 ### 3、闭包里面的 return
 
 函数如果执行 return 后面代码是不会执行的 不管是函数里面套函数(错的只有 if 语句才会) 如上面 a 函数 console.log(321);永远不会执行
-上面说的不对 上面是因为 if 语句
+上面说的不对 上面是因为 if 语句 ; for循环也会退出函数
 假如变成
 
 ```JavaScript
@@ -59,6 +59,29 @@
 			}
 		}
 		a() 这里就只会打印222了
+        
+        
+        function get123() {
+           for (let i = 0; i <=4; i++) {
+                if (i === 4) return;
+            }
+            console.log(123); 
+        }
+         get123() 这里不会打印123
+ 
+         	
+         
+        function get123() {
+           for (let i = 0; i <=4; i++) {
+                if (i === 4) break;
+            }
+            console.log(123); 
+        }
+
+        get123();
+        // 123
+ 
+
 
 ```
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+    <div id="root"></div>
+    <div id="abc"></div>
+</head>
+
+<body>
+    <script src="./runtime-dom.global.js">
+
+    </script>
+    <script>
+        let {
+            render,
+            h,
+            ref,
+            createRenderer,
+            Text,
+            Fragment,
+            inject,
+            provide,
+            reactive ,
+            getCurrentInstance,
+            Teleport
+        } = VueRuntimeDOM
+
+     
+        const Mycomponent = {
+           setup(){
+            const flag = ref(true)
+            const handleClick = () =>{
+                flag.value = false
+            }
+            return {
+                flag,
+                handleClick
+            }
+           },
+            render(){
+               return h('button',{onClick:this.handleClick},this.flag?h(Teleport,{to:'#root'},[h(Text,456)]):h(Teleport,{to:'#abc'},[h(Text,1111)]))
+            }
+        }
+      
+        //用户接受的是props,没有写props的就是attrs
+        //组件是单向数据流,不能改变父亲的属性,会警告
+        render(h(Mycomponent), app)
+    </script>
+</body>
+
+</html>

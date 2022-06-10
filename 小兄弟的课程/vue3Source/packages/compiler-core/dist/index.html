@@ -15,9 +15,7 @@
             compile
         } = VueCompilerCore
         //解析规则就是已更改字符来进行判断,并且解析完毕后就删除掉
-        let r = compile(`a
-        
-        bc <div></div>{{data}}`)
+        let r = compile(`<div a="1"></div><div></div>  `)
         console.log(r);
     </script>
 </body>

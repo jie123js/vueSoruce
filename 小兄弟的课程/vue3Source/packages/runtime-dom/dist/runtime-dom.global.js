@@ -23,8 +23,10 @@ var VueRuntimeDOM = (() => {
     Fragment: () => Fragment,
     LifecycleHooks: () => LifecycleHooks,
     ReactiveEffect: () => ReactiveEffect,
+    Teleport: () => TeleportImpl,
     Text: () => Text2,
     activeEffect: () => activeEffect,
+    activeEffectScope: () => activeEffectScope,
     computed: () => computed,
     createComponentInstance: () => createComponentInstance,
     createElementBlock: () => createElementBlock,
@@ -32,9 +34,12 @@ var VueRuntimeDOM = (() => {
     createRenderer: () => createRenderer,
     createVnode: () => createVnode,
     currentInstance: () => currentInstance,
+    defineAsyncComponent: () => defineAsyncComponent,
     effect: () => effect,
+    effectScope: () => effectScope,
     getCurrentInstance: () => getCurrentInstance,
     h: () => h,
+    inject: () => inject,
     isSameVnode: () => isSameVnode,
     isVnode: () => isVnode,
     onBeforeMount: () => onBeforeMount,
@@ -42,7 +47,9 @@ var VueRuntimeDOM = (() => {
     onMounted: () => onMounted,
     onUpdated: () => onUpdated,
     openBlock: () => openBlock,
+    provide: () => provide,
     reactive: () => reactive,
+    recordEffectScope: () => recordEffectScope,
     ref: () => ref,
     render: () => render,
     setCurrentInstance: () => setCurrentInstance,
@@ -80,6 +87,50 @@ var VueRuntimeDOM = (() => {
     return hasOwnProperty.call(value, key);
   };
 
+  // packages/reactivity/src/effctScope.ts
+  var activeEffectScope = null;
+  var EffectScope = class {
+    constructor(detached = false) {
+      this.active = true;
+      this.parent = null;
+      this.effects = [];
+      this.scopes = [];
+      if (!detached && activeEffectScope) {
+        activeEffectScope.scopes.push(this);
+      }
+    }
+    run(fn) {
+      if (this.active) {
+        try {
+          this.parent = activeEffectScope;
+          activeEffectScope = this;
+          return fn();
+        } finally {
+          activeEffectScope = this.parent;
+        }
+      }
+    }
+    stop() {
+      if (this.active) {
+        for (let i = 0; i < this.effects.length; i++) {
+          this.effects[i].stop();
+        }
+        for (let i = 0; i < this.scopes.length; i++) {
+          this.scopes[i].stop();
+        }
+        this.active = false;
+      }
+    }
+  };
+  function recordEffectScope(effect2) {
+    if (activeEffectScope && activeEffectScope.active) {
+      activeEffectScope.effects.push(effect2);
+    }
+  }
+  function effectScope(detached) {
+    return new EffectScope(detached);
+  }
+
   // packages/reactivity/src/effect.ts
   var activeEffect = void 0;
   function cleanupEffect(effect2) {
@@ -96,6 +147,7 @@ var VueRuntimeDOM = (() => {
       this.active = true;
       this.parent = null;
       this.deps = [];
+      recordEffectScope(this);
     }
     run() {
       if (!this.active) {
@@ -407,8 +459,10 @@ var VueRuntimeDOM = (() => {
   var currentInstance = null;
   var setCurrentInstance = (instance) => currentInstance = instance;
   var getCurrentInstance = () => currentInstance;
-  function createComponentInstance(vnode) {
+  function createComponentInstance(vnode, parent) {
     let instance = {
+      provides: parent ? parent.provides : /* @__PURE__ */ Object.create(null),
+      parent,
       data: null,
       vnode,
       subtree: null,
@@ -567,6 +621,27 @@ var VueRuntimeDOM = (() => {
   }
   getSequence([2, 3, 1, 5, 6, 8, 7, 9, 4]);
 
+  // packages/runtime-core/src/components/Teleport.ts
+  var TeleportImpl = {
+    __isTeleport: true,
+    process(n1, n2, container, internals) {
+      let { mountChildren, patchChildren, move } = internals;
+      if (!n1) {
+        const target = document.querySelector(n2.props.to);
+        if (target) {
+          mountChildren(n2.children, target);
+        }
+      } else {
+        patchChildren(n1, n2, container);
+        if (n2.props.to !== n1.props.to) {
+          const nextTarget = document.querySelector(n2.props.to);
+          n2.children.forEach((child) => move(child, nextTarget));
+        }
+      }
+    }
+  };
+  var isTeleport = (type) => type.__isTeleport;
+
   // packages/runtime-core/src/vnode.ts
   var Text2 = Symbol("Text");
   var Fragment = Symbol("Fragment");
@@ -577,7 +652,7 @@ var VueRuntimeDOM = (() => {
     return n1.type === n2.type && n1.key === n2.key;
   }
   function createVnode(type, props, children = null, patchFlag) {
-    let shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
+    let shapeFlag = isString(type) ? 1 /* ELEMENT */ : isTeleport(type) ? 64 /* TELEPORT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
     const vnode = {
       type,
       props,
@@ -641,13 +716,13 @@ var VueRuntimeDOM = (() => {
       }
       return children[i];
     };
-    const mountChildren = (children, container) => {
+    const mountChildren = (children, container, parentComponent) => {
       for (let i = 0; i < children.length; i++) {
         let child = normalize(children, i);
-        patch(null, child, container);
+        patch(null, child, container, parentComponent);
       }
     };
-    function mountElement(vnode, container, anchor) {
+    function mountElement(vnode, container, anchor, parentComponent) {
       let { type, props, children, shapeFlag } = vnode;
       let el = vnode.el = hostCreateElement(type);
       if (props) {
@@ -658,7 +733,7 @@ var VueRuntimeDOM = (() => {
       if (shapeFlag & 8 /* TEXT_CHILDREN */) {
         hostSetElementText(el, children);
       } else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
-        mountChildren(children, el);
+        mountChildren(children, el, parentComponent);
       }
       hostInsert(el, container, anchor);
     }
@@ -765,7 +840,7 @@ var VueRuntimeDOM = (() => {
         }
       }
     };
-    const patchChildren = (n1, n2, el) => {
+    const patchChildren = (n1, n2, el, parentComponent) => {
       const c1 = n1.children;
       const c2 = n2.children;
       const prevShapeFlag = n1.shapeFlag;
@@ -789,17 +864,17 @@ var VueRuntimeDOM = (() => {
             hostSetElementText(el, "");
           }
           if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
-            mountChildren(c2, el);
+            mountChildren(c2, el, parentComponent);
           }
         }
       }
     };
-    function patchBlockChildren(n1, n2) {
+    function patchBlockChildren(n1, n2, parentComponent) {
       for (let i = 0; i < n2.dynamicChildren.length; i++) {
-        patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i]);
+        patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i], parentComponent);
       }
     }
-    const patchElement = (n1, n2, container) => {
+    const patchElement = (n1, n2, parentComponent) => {
       let el = n2.el = n1.el;
       let oldProps = n1.props || {};
       let newProps = n2.props || {};
@@ -812,27 +887,27 @@ var VueRuntimeDOM = (() => {
         patchProps(oldProps, newProps, el);
       }
       if (n2.dynamicChildren) {
-        patchBlockChildren(n1, n2);
+        patchBlockChildren(n1, n2, parentComponent);
       } else {
-        patchChildren(n1, n2, el);
+        patchChildren(n1, n2, el, parentComponent);
       }
     };
-    const processElement = (n1, n2, container, anchor) => {
+    const processElement = (n1, n2, container, anchor, parentComponent) => {
       if (n1 === null) {
-        mountElement(n2, container, anchor);
+        mountElement(n2, container, anchor, parentComponent);
       } else {
-        patchElement(n1, n2, container);
+        patchElement(n1, n2, parentComponent);
       }
     };
-    const processFragment = (n1, n2, container) => {
+    const processFragment = (n1, n2, container, parentComponent) => {
       if (n1 == null) {
-        mountChildren(n2.children, container);
+        mountChildren(n2.children, container, parentComponent);
       } else {
-        patchChildren(n1, n2, container);
+        patchChildren(n1, n2, container, parentComponent);
       }
     };
-    const mountComponent = (vnode, container, anchor) => {
-      let instance = vnode.components = createComponentInstance(vnode);
+    const mountComponent = (vnode, container, anchor, parentComponent) => {
+      let instance = vnode.components = createComponentInstance(vnode, parentComponent);
       setupComponent(instance);
       setupRenderEffect(instance, container, anchor);
     };
@@ -850,7 +925,7 @@ var VueRuntimeDOM = (() => {
             invokeArrayFns(bm);
           }
           const subtree = render3.call(instance.proxy, instance.proxy);
-          patch(null, subtree, container, anchor);
+          patch(null, subtree, container, anchor, instance);
           if (m) {
             invokeArrayFns(m);
           }
@@ -865,7 +940,7 @@ var VueRuntimeDOM = (() => {
             invokeArrayFns(bu);
           }
           const subtree = render3.call(instance.proxy, instance.proxy);
-          patch(instance.subtree, subtree, container, anchor);
+          patch(instance.subtree, subtree, container, anchor, instance);
           if (u) {
             invokeArrayFns(u);
           }
@@ -893,14 +968,14 @@ var VueRuntimeDOM = (() => {
         instance.update();
       }
     };
-    const processComponent = (n1, n2, container, anchor) => {
+    const processComponent = (n1, n2, container, anchor, parentComponent) => {
       if (n1 == null) {
-        mountComponent(n2, container, anchor);
+        mountComponent(n2, container, anchor, parentComponent);
       } else {
         updateComponent(n1, n2);
       }
     };
-    const patch = (n1, n2, container, anchor = null) => {
+    const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
       if (n1 === n2)
         return;
       if (n1 && !isSameVnode(n1, n2)) {
@@ -913,17 +988,30 @@ var VueRuntimeDOM = (() => {
           processText(n1, n2, container);
           break;
         case Fragment:
-          processFragment(n1, n2, container);
+          processFragment(n1, n2, container, parentComponent);
           break;
         default:
           if (shapeFlag & 1 /* ELEMENT */) {
-            processElement(n1, n2, container, anchor);
+            processElement(n1, n2, container, anchor, parentComponent);
           } else if (shapeFlag & 4 /* STATEFUL_COMPONENT */) {
-            processComponent(n1, n2, container, anchor);
+            processComponent(n1, n2, container, anchor, parentComponent);
+          } else if (shapeFlag & 64 /* TELEPORT */) {
+            type.process(n1, n2, container, {
+              mountChildren,
+              patchChildren,
+              move(vnode, container2) {
+                hostInsert(vnode.components ? vnode.components.subtree.el : vnode.el, container2);
+              }
+            });
           }
       }
     };
     const unmount = (vnode) => {
+      if (vnode.type == Fragment) {
+        return unmountChildren(vnode);
+      } else if (vnode.shapeFlag & 6 /* COMPONENT */) {
+        return unmount(vnode.components.subtree);
+      }
       hostRemove(vnode.el);
     };
     const render2 = (vnode, container) => {
@@ -986,6 +1074,75 @@ var VueRuntimeDOM = (() => {
   var onMounted = createHook("m" /* MOUNTED */);
   var onBeforeUpdate = createHook("bu" /* BEFORE_UPDATE */);
   var onUpdated = createHook("u" /* UPDATED */);
+
+  // packages/runtime-core/src/apiInject.ts
+  function provide(key, value) {
+    if (!currentInstance)
+      return;
+    let provides = currentInstance.provides;
+    const parentProvides = currentInstance.parent && currentInstance.parent.provides;
+    if (provides === parentProvides) {
+      provides = currentInstance.provides = Object.create(provide);
+    }
+    provides[key] = value;
+  }
+  function inject(key, defaultValue) {
+    if (!currentInstance)
+      return;
+    const provides = currentInstance.parent && currentInstance.parent.provides;
+    if (provides && key in provides) {
+      return provides[key];
+    } else if (arguments.length > 1) {
+      return defaultValue;
+    }
+  }
+
+  // packages/runtime-core/src/defineAsyncComponents.ts
+  function defineAsyncComponent(options) {
+    if (isFunction(options)) {
+      options = { loader: options };
+    }
+    return {
+      setup() {
+        const loaded = ref(false);
+        const error = ref(false);
+        const loading = ref(false);
+        let Comp = null;
+        const { onError, loader, timeout, errorComponent, delay, loadingComponent } = options;
+        function load() {
+          return loader().catch((err) => {
+            if (onError) {
+              return new Promise((resolve, reject) => {
+                const retry = () => resolve(load());
+                const fail = () => reject(err);
+                onError(err, retry, fail);
+              });
+            }
+          });
+        }
+        load().then((c) => {
+          Comp = c;
+          loaded.value = true;
+        }).catch((err) => err.value = err).finally(() => loading.value = false);
+        setTimeout(() => {
+          error.value = true;
+        }, timeout);
+        setTimeout(() => {
+          loading.value = true;
+        }, delay);
+        return () => {
+          if (loaded.value) {
+            return h(Comp);
+          } else if (error.value && errorComponent) {
+            return h(errorComponent);
+          } else if (loading.value && loadingComponent) {
+            return h(loadingComponent);
+          }
+          return h(Fragment, []);
+        };
+      }
+    };
+  }
 
   // packages/runtime-dom/src/nodeOps.ts
   var nodeOps = {

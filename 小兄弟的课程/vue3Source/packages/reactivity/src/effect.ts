@@ -1,3 +1,5 @@
+import { recordEffectScope } from "./effctScope";
+
 export let activeEffect = undefined;
 
 function cleanupEffect(effect) {
@@ -14,6 +16,7 @@ export class ReactiveEffect {
   public deps = []; //这个用于effect记录属性  多对多关系
   constructor(public fn, public scheduler?) {
     //加了public相当于this.fn=fn
+    recordEffectScope(this)
   }
   run() {
     if (!this.active) {

@@ -10,3 +10,5 @@ export { ref,toRefs } from "./ref";
 
 
 export * from './effect'
+
+export * from './effctScope'

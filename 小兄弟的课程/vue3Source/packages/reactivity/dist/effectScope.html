@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="app"></div>
+</head>
+<script src="./reactivity.global.js"></script>
+<script>
+    const {
+        reactive,
+        effect,
+        effectScope
+    } = VueReactivity
+    let obj = {
+        name: 'zj',
+        age: 11,
+        flag: true,
+       
+    }
+    let r1 = reactive(obj)
+
+    let scope = effectScope()
+
+    scope.run(()=>{
+        effect(() => {
+        // r1.age++
+        app.innerHTML = r1.age
+        })
+        effect(() => {
+            // r1.age++
+            console.log(r1.age,'outer')
+        })
+        let inner = effectScope(true)
+        inner.run(()=>{
+            effect(() => {
+            // r1.age++
+            console.log(r1.age,'inner')
+        })
+        })
+    })
+    scope.stop()
+    // let runner = effect(() => {
+    //     // r1.age++
+    //     app.innerHTML = r1.age
+    // })
+    // runner.effect.stop()
+    // runner.effect.stop()
+    setTimeout(() => {
+
+        r1.age++
+        //console.log(r1.age)
+
+    }, 1000);
+
+</script>
+
+<body>
+
+</body>
+
+</html>

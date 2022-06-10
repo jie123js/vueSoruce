@@ -36,13 +36,13 @@ export function createRenderer(renderOptions) {
     }
     return children[i];
   };
-  const mountChildren = (children, container) => {
+  const mountChildren = (children, container,parentComponent) => {
     for (let i = 0; i < children.length; i++) {
       let child = normalize(children, i);
-      patch(null, child, container);
+      patch(null, child, container,parentComponent);
     }
   };
-  function mountElement(vnode, container, anchor) {
+  function mountElement(vnode, container, anchor,parentComponent) {
     let { type, props, children, shapeFlag } = vnode;
     let el = (vnode.el = hostCreateElement(type));
     if (props) {
@@ -55,7 +55,7 @@ export function createRenderer(renderOptions) {
       hostSetElementText(el, children);
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       //数组
-      mountChildren(children, el);
+      mountChildren(children, el,parentComponent);
     }
     hostInsert(el, container, anchor);
   }
@@ -191,7 +191,7 @@ export function createRenderer(renderOptions) {
     //  console.log(i, e1, e2);
   };
 
-  const patchChildren = (n1, n2, el) => {
+  const patchChildren = (n1, n2, el,parentComponent) => {
     //比较两个儿子的的差异,el是父节点
     const c1 = n1.children;
     const c2 = n2.children;
@@ -235,21 +235,21 @@ export function createRenderer(renderOptions) {
           hostSetElementText(el, ""); //新数组  老文本 (清空文本,进行挂载)
         }
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          mountChildren(c2, el); //新数组 文本 (清空文本,进行挂载)
+          mountChildren(c2, el,parentComponent); //新数组 文本 (清空文本,进行挂载)
         }
       }
     }
   };
 
-  function patchBlockChildren(n1, n2) {
+  function patchBlockChildren(n1, n2,parentComponent) {
     for (let i = 0; i < n2.dynamicChildren.length; i++) {
       //以前是树的递归,现在是数组比较
 
-      patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i]);
+      patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i],parentComponent);
     }
   }
 
-  const patchElement = (n1, n2, container?) => {
+  const patchElement = (n1, n2, parentComponent) => {
     //先复用节点,再比较属性
 
     let el = (n2.el = n1.el);
@@ -269,32 +269,33 @@ export function createRenderer(renderOptions) {
 
     if (n2.dynamicChildren) {
       //元素之间的更新优化,靶向更新
-      patchBlockChildren(n1, n2);
+      patchBlockChildren(n1, n2,parentComponent);
     } else {
       //这个是全量比对,没用靶向更新
-      patchChildren(n1, n2, el);
+      patchChildren(n1, n2, el,parentComponent);
     }
   };
-  const processElement = (n1, n2, container, anchor) => {
+  const processElement = (n1, n2, container, anchor,parentComponent) => {
     if (n1 === null) {
-      mountElement(n2, container, anchor);
+      mountElement(n2, container, anchor,parentComponent);
     } else {
       //元素比对
-      patchElement(n1, n2, container);
+      patchElement(n1, n2, parentComponent);
     }
   };
 
-  const processFragment = (n1, n2, container) => {
+  const processFragment = (n1, n2, container,parentComponent) => {
     if (n1 == null) {
-      mountChildren(n2.children, container);
+      mountChildren(n2.children, container,parentComponent);
     } else {
-      patchChildren(n1, n2, container);
+      patchChildren(n1, n2, container,parentComponent);
     }
   };
 
-  const mountComponent = (vnode, container, anchor) => {
+  const mountComponent = (vnode, container, anchor,parentComponent) => {
+    
     // 1)创建一个组件实例
-    let instance = (vnode.components = createComponentInstance(vnode));
+    let instance = (vnode.components = createComponentInstance(vnode,parentComponent));
 
     // 2)给实例上赋值
 
@@ -399,7 +400,7 @@ export function createRenderer(renderOptions) {
 
         const subtree = render.call(instance.proxy, instance.proxy);
 
-        patch(null, subtree, container, anchor); //创造了subtree的真实节点并且插入
+        patch(null, subtree, container, anchor,instance); //创造了subtree的真实节点并且插入
 
         if (m) {
           invokeArrayFns(m);
@@ -420,7 +421,7 @@ export function createRenderer(renderOptions) {
         }
 
         const subtree = render.call(instance.proxy, instance.proxy);
-        patch(instance.subtree, subtree, container, anchor);
+        patch(instance.subtree, subtree, container, anchor,instance);
 
         if (u) {
           invokeArrayFns(u);
@@ -462,16 +463,16 @@ export function createRenderer(renderOptions) {
     // updateProps(instance,prevProps,nextProps) //属性更新
   };
 
-  const processComponent = (n1, n2, container, anchor) => {
+  const processComponent = (n1, n2, container, anchor,parentComponent) => {
     if (n1 == null) {
-      mountComponent(n2, container, anchor);
+      mountComponent(n2, container, anchor,parentComponent);
     } else {
       //组件更新靠的是props
       updateComponent(n1, n2);
     }
   };
 
-  const patch = (n1, n2, container, anchor = null) => {
+  const patch = (n1, n2, container, anchor = null,parentComponent = null) => {
     //核心patch方法
     if (n1 === n2) return;
 
@@ -485,18 +486,31 @@ export function createRenderer(renderOptions) {
         processText(n1, n2, container);
         break;
       case Fragment: //无用标签
-        processFragment(n1, n2, container);
+        processFragment(n1, n2, container,parentComponent);
         break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(n1, n2, container, anchor);
+          processElement(n1, n2, container, anchor,parentComponent);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(n1, n2, container, anchor);
+          processComponent(n1, n2, container, anchor,parentComponent);
+        }else if(shapeFlag&ShapeFlags.TELEPORT){
+          type.process(n1, n2, container,{
+            mountChildren,
+            patchChildren,
+            move(vnode,container){
+              hostInsert(vnode.components?vnode.components.subtree.el:vnode.el,container)
+            }
+          })
         }
     }
   };
 
   const unmount = (vnode) => {
+    if(vnode.type ==Fragment){
+      return unmountChildren(vnode)
+    }else if(vnode.shapeFlag&ShapeFlags.COMPONENT){
+      return unmount(vnode.components.subtree)
+    }
     hostRemove(vnode.el);
   };
 

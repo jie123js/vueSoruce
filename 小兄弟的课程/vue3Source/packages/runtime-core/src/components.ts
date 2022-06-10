@@ -7,9 +7,11 @@ export let currentInstance = null;
 export const setCurrentInstance = (instance) => (currentInstance = instance);
 export const getCurrentInstance = () => currentInstance;
 
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode,parent) {
   let instance = {
     //组件的实例
+    provides:parent?parent.provides:Object.create(null),//所有的组件用的就是父亲的provide
+    parent,
     data: null,
     vnode, //组件的虚拟节点
     subtree: null, //渲染的组件内容
