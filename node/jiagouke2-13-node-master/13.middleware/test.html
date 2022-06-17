@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // 表单支持跨域 ajax会有跨域问题 
+        // 能解决跨域的方案哪些：
+        // nginx 反向代理  我先访问代理服务器， 通过代理服务器访问真实的服务器
+        // jsonp
+        // websocket 
+        // cors
+        let xhr = new XMLHttpRequest();
+        xhr.responseType = 'json'; // 要求服务端返回的类型
+        xhr.open('post','http://localhost:3000/getUser',true);
+        xhr.setRequestHeader('Content-Type','application/json'); // 告诉服务端我给你的是什么类型
+        xhr.onload = function(){ // 200 4
+            console.log(xhr.response)
+        }
+        xhr.send('{"a":1,"b":2}')
+    </script>
+</body>
+</html>

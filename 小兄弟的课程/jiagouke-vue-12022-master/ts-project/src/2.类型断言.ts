@@ -34,9 +34,9 @@ type Person3 = Person1 | Person2; // 并集 , 只能取出共享的属性
 let person1: Person1 = { name: "zs1", handsome: "100" };
 let person2: Person2 = { name: "zs2", height: "100" };
 
-let person3: Person3 = { name: "zs2", height: "100", handsome: "100" };
+let person3: Person3 = { name: "zs2", height: "100", handsome: "100" };  //满足其中一个Person1 | Person2其中一个就可以  即3里面有1的或者2的其中一个属性就可以
 type Person4 = Person1 & Person2; // 交集 ，就是要满足两方的 人既能给A 又能给B
-let person4: Person4 = { name: "zs1", handsome: "100", height: "100" };
+let person4: Person4 = { name: "zs1", handsome: "100", height: "100" };//必须要满足Person1 &Person2其中每一个  即person4里面要有1的所有属性也要有2的所有属性
 // person1 要求要满足有name 和handsome 多了可以 不能少 安全
 person1 = person4;
 person2 = person4;
