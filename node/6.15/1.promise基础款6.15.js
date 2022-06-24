@@ -9,7 +9,7 @@ class Promise{
     sucVal = undefined
     faiVal = undefined
     constructor(fn){
-
+      
         const resolve = (data)=>{
             if(this.status==PENDING){
                 this.status = FULFILLED

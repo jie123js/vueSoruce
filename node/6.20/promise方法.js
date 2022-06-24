@@ -58,6 +58,11 @@ class Promise {
     this.faiVal = undefined;
 
     const resolve = (data) => {
+       
+        if(data instanceof Promise){
+         
+            return data.then(resolve,reject)
+        }
       if (this.status == PENDING) {
         this.status = FULFILLED;
         this.sucVal = data;
@@ -121,6 +126,7 @@ class Promise {
           if (this.status === PENDING) {
             this.sucCal.push(() => {
                 setTimeout(() => {
+                    
                     try {
                         let x =onFulfilled(this.sucVal);
            
@@ -155,8 +161,75 @@ class Promise {
 
     return promise2;
   }
+  catch(callback){
+    return this.then(null,callback)
+  }
+//   finally(callback){
+//     return   this.then((v)=>{
+      
+//         callback()
+//         return v
+//     },(e)=>{
+//         callback()
+//          throw e
+//     })
+ 
+//   }
+finally(callback){
+    return this.then((v)=>{
+        return Promise.resolve(callback()).then(()=>v)
+    }
+       
+    ,(reason)=>{
+        return Promise.resolve(callback()).then(()=>{throw reason})
+    })
+}
 }
 
+
+
+
+
+
+Promise.reject = function(reason){
+    return new Promise((resolve,reject)=>{
+        reject(reason)
+    })
+}
+
+Promise.resolve = function(value){
+    return new Promise((resolve,reject)=>{
+        resolve(value)
+    })
+}
+
+Promise.all = function(promiseFn){
+    return new Promise((resolve,reject)=>{
+        let arr = []
+        let times = 0;
+        function processData(i,v){
+            arr[i] = v
+            if(arr.length===++times){
+                resolve(arr)
+            }
+        }
+
+
+        for(let i = 0;i<promiseFn.length;i++){
+            promiseFn[i].then((v)=>{
+               processData(i,v)
+            },reject)
+        }
+    })
+}
+
+Promise.race = function (values) {
+    return new Promise((resolve, reject) => {
+        values.forEach(item => {
+            Promise.resolve(item).then(resolve, reject); // 先调用会屏蔽后续调用的逻辑
+        });
+    })
+}
 
 //这个是测试promise的代码
 
@@ -168,10 +241,16 @@ Promise.deferred = function () {
     });
     return dfd
 }
+module.exports =Promise
 // npm install promises-aplus-tests -g 全局安装只能在命令行中使用
 // promises-aplus-tests promise-3.js
-module.exports = Promise;
 
 
+
+
+
+while(1){
+    return console.log(123);
+}
 
 

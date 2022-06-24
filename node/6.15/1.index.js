@@ -1,4 +1,4 @@
-const Promise = require('./2.promise6.16')
+const Promise = require('./1.promise基础款6.15')
 
 
 let promise = new Promise((resolve,reject)=>{
@@ -23,6 +23,4 @@ let promise2 = promise.then((value)=>{
     console.log(err+'then');
 })
 
-promise2.then((value)=>{
-    console.log(value);
-})
+console.log(321);

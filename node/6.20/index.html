@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="./promise方法.js"></script>
+    <script>
+   
+        let p = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log(111);
+
+                resolve('nih')
+            }, 3000);
+        })
+       
+            p.then((v)=>{
+                console.log(v);
+            })
+        // Promise.resolve(p).then((v) => {
+        //     console.log('a' + v);
+        // })
+        // let a = (v,c)=>{
+        //     console.log(v);
+        // }
+        // setTimeout(() => {
+        //     a(b,123)
+        // }, 1000);
+        
+        // const b =321
+        // console.log();
+    </script>
+</body>
+
+</html>

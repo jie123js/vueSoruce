@@ -22,19 +22,19 @@ function readFile(...args) {
 // 2) ---------------------resolve和reject
 // resolve 如果放了一个promise的话会有等待效果，等待解析后向下执行
 // reject 没有等待效果
-// let p = new Promise1((resolve,reject)=>{
-//     setTimeout(()=>{
-//         resolve('xxxxx')
-//     },3000)
-// })
+let p = new Promise1((resolve,reject)=>{
+    setTimeout(()=>{
+        resolve('xxxxx')
+    },3000)
+})
 // // catch具备统一处理错误的功能
-// Promise1.reject(p).then().then().catch( err => {
-//     console.log('f', err)
-//     return 'abc'
-// }).then(data=>{
-//     // 这里可以继续then 不受catch影响，catch就是一个then方法
-//     console.log(data);
-// });
+Promise1.resolve(p).then().then().catch( err => {
+    console.log('f', err)
+    return 'abc'
+}).then(data=>{
+    // 这里可以继续then 不受catch影响，catch就是一个then方法
+    console.log(data);
+});
 
 // Promise.resolve  Promise.reject  catch
 
@@ -48,11 +48,11 @@ function readFile(...args) {
 // }
 new Promise((resolve, reject) => {
     //resolve('成功');
-    reject('失败'); // 有个逻辑 无论成功和失败都要执行
+    resolve('cg'); // 有个逻辑 无论成功和失败都要执行
 }).finally(() => {
     return new Promise((resolve, reject) => {
         setTimeout(() => { // clearTimeout
-            resolve();
+            resolve(123);
             console.log('finally');
         }, 1000)
     })

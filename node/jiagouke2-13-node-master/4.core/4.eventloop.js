@@ -1,14 +1,14 @@
 
-// process.nextTick(()=>{  // node中新增的微任务 
-//     console.log('nextTick')
-// })
+process.nextTick(()=>{  // node中新增的微任务 
+    console.log('nextTick')
+})
 
-// console.log('abc')
+console.log('abc')
 
 
-// Promise.resolve().then(()=>{
-//     console.log('promise')
-// })
+Promise.resolve().then(()=>{
+    console.log('promise')
+})
 
 setImmediate(()=>{ // node中新增的宏任务
     console.log('setImmediate')
@@ -43,15 +43,15 @@ setTimeout(()=>{
 // 如果在主栈中调用了 timer 和 setImmediate执行顺序会受性能影响，有可能进入到事件循环的时候定时器没有到时间，则直接进入到check中了
 
 
-const fs = require('fs');
+// const fs = require('fs');
 
-fs.readFile('./work.md', () => { // 轮训阶段完成的
-  setTimeout(() => { // setTimeout 
-    console.log('timeout');
-  }, 0);
-  setImmediate(() => { // setImmediate 优先级一定高于setTimeout
-    console.log('immediate');
-  });
-});
+// fs.readFile('./work.md', () => { // 轮训阶段完成的
+//   setTimeout(() => { // setTimeout 
+//     console.log('timeout');
+//   }, 0);
+//   setImmediate(() => { // setImmediate 优先级一定高于setTimeout
+//     console.log('immediate');
+//   });
+// });
 
 // 注意执行的顺序，其他的都是一样的。
